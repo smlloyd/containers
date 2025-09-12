@@ -1,0 +1,24 @@
+name: Build Tailscale Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "tailscale/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build_image:
+    name: Build tailscale image
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      container_name: tailscale
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    secrets: inherit

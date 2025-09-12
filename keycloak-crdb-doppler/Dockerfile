@@ -24,7 +24,6 @@ RUN update-ca-trust
 RUN rpm --import 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' && \
     curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/config.rpm.txt' | tee /etc/yum.repos.d/doppler-cli.repo && \
     yum install -y doppler  && \
-    yum clean all
 
 FROM quay.io/phasetwo/keycloak-crdb:${KC_VERSION}
 
