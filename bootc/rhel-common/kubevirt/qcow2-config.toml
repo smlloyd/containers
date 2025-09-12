@@ -1,4 +1,0 @@
-[[customizations.user]]
-name = "simon"
-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDGjZWlUUUFa187f/Z1u2A49O3FGCWcNxEaqJaBCmJB0CmuHGIGBkH9MH5ka6ZaeZ5GJrTZs2/U4rN61B3gQLB38i0nOivK2VbcdRM2Ynw4PJfQMavp5zpGy1lRp4Tmzvnznq27B1PJEsUvaTikTV0cohnEilx/XquCHfz0VMIRIIQ3ib/QYHxZ1JFWxYcgj9sFh8E5pJnTijTXe6aodShnM8u81nUURYtjC+b5A3vQb+Q1h9Yr2yVWseW2TTxZwsu72Qqf1aBfhmOFqz+6U8fTstFs25hXJWnzt4lSf4O9arfmJ5RS7+oS8Ldl9SHMYwK/moqYtVpYU/1UUmxV0jsb simon@slloyd.net""
-groups = ["wheel"]

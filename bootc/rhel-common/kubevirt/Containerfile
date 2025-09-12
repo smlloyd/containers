@@ -1,4 +1,4 @@
-COPY ./common/kubevirt/usr /usr/
+COPY ./bootc/common/kubevirt/usr /usr/
 RUN dnf -y install cloud-init qemu-guest-agent && \
     ln -s ../cloud-init.target /usr/lib/systemd/system/default.target.wants && \
     dnf clean all
