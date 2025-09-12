@@ -1,0 +1,23 @@
+name: Cockroachdb Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "keycloak-crdb/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build_image:
+    name: Build keycloak-crdb image
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      container_name: keycloak-crdb
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    secrets: inherit
