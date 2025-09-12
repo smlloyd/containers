@@ -15,20 +15,23 @@ WORKDIR /opt/keycloak
 
 RUN /opt/keycloak/bin/kc.sh build
 
+# Add slloyd.net CA
 FROM registry.access.redhat.com/ubi9 AS ubi-micro-build
 ADD https://public-keys.slloyd.net/certs/Lloyd%2BCA.crt /etc/pki/ca-trust/source/anchors/slloydCA.crt
 RUN update-ca-trust
-
-FROM quay.io/phasetwo/keycloak-crdb:${KC_VERSION}
-
-COPY --from=builder /opt/keycloak/ /opt/keycloak/
-COPY --from=ubi-micro-build /etc/pki /etc/pki
 
 # Install Doppler CLI
 RUN rpm --import 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' && \
     curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/config.rpm.txt' | tee /etc/yum.repos.d/doppler-cli.repo && \
     yum install -y doppler  && \
     yum clean all
+
+FROM quay.io/phasetwo/keycloak-crdb:${KC_VERSION}
+
+COPY --from=builder /opt/keycloak/ /opt/keycloak/
+COPY --from=ubi-micro-build /etc/pki /etc/pki
+COPY --from=ubi-micro-build /usr/bin/doppler /usr/bin/doppler
+
 
 ENV KC_DB=cockroach
 ENV KC_TRANSACTION_XA_ENABLED=false
