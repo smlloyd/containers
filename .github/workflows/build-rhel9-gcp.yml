@@ -1,0 +1,24 @@
+name: Build RHEL9 gcp image
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - bootc/rhel9/Containerfile
+      - bootc/rhel9/gcp/**
+      - bootc/rhel9/tailscale/**
+    branches:
+      - main
+
+jobs:
+  build_bootc:
+    uses: ./.github/workflows/build_rhel.yml
+    with:
+      image_name: rhel9/rhel-bootc-gcp
+      containerfiles: |
+        bootc/rhel9/Containerfile
+        bootc/rhel9/tailscale/Containerfile
+        bootc/rhel9/gcp/Containerfile
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
