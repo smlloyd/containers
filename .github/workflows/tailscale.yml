@@ -16,7 +16,7 @@ jobs:
     name: Build tailscale image
     uses: ./.github/workflows/docker-publish.yml
     with:
-      container_name: tailscale
+      image_name: tailscale
     permissions:
       contents: read
       packages: write

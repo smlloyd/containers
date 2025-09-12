@@ -16,7 +16,7 @@ jobs:
     name: Build keycloak-crdb image
     uses: ./.github/workflows/docker-publish.yml
     with:
-      container_name: keycloak-crdb
+      image_name: keycloak-crdb
     permissions:
       contents: read
       packages: write

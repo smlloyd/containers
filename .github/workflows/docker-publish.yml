@@ -3,7 +3,7 @@ name: Docker build template
 on:
   workflow_call:
     inputs:
-      container_name:
+      image_name:
         required: true
         type: string
 
@@ -11,7 +11,7 @@ env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.container_name }}
+  IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
 
 jobs:
   build:
@@ -70,7 +70,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          context: "{{defaultContext}}:${{ inputs.container_name }}"
+          context: "{{defaultContext}}:${{ inputs.image_name }}"
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

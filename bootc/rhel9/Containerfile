@@ -1,0 +1,7 @@
+FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:71f2f9bab22c32835bb30020e9b46e43efc1d36ae976bd22060750f1ba7e45f0
+
+COPY ./bootc/rhel9/etc /etc/
+RUN systemctl disable kdump
+RUN dnf -y install rhc dnf-plugins-core vim zsh tmux cockpit cockpit-podman tuned
+RUN dnf clean all
+RUN systemctl enable cockpit.socket
