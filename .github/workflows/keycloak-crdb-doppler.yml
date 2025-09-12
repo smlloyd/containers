@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "keycloak-crdb/**"
+      - "keycloak-crdb-doppler/**"
   pull_request:
     branches:
       - main
@@ -15,7 +15,7 @@ jobs:
     name: Build keycloak-crdb image
     uses: ./.github/workflows/docker-publish.yml
     with:
-      container_name: keycloak-crdb
+      container_name: keycloak-crdb-doppler
     permissions:
       contents: read
       packages: write
