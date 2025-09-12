@@ -1,4 +1,4 @@
-name: Cockroachdb Docker Image
+name: Build keycloak-crdb image
 
 on:
   workflow_dispatch:

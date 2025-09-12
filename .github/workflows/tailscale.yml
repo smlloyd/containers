@@ -1,4 +1,4 @@
-name: Build Tailscale Image
+name: Build tailscale image
 
 on:
   workflow_dispatch:
