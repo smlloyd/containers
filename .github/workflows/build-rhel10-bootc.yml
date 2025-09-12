@@ -1,4 +1,4 @@
-name: Build RHEL10 image
+name: Build RHEL10 bootc image
 on:
   workflow_dispatch:
   push:

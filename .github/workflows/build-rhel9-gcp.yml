@@ -1,4 +1,4 @@
-name: Build RHEL9 gcp image
+name: Build RHEL9 bootc-gcp image
 on:
   workflow_dispatch:
   push:
