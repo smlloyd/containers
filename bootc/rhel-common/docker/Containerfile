@@ -1,4 +1,4 @@
-COPY ./bootc/common-rhel/docker/usr /usr/
+COPY ./bootc/rhel-common/docker/usr /usr/
 
 RUN dnf -y remove docker \
                   docker-client \
