@@ -10,12 +10,6 @@ on:
         type: string
 
 jobs:
-  setup-qemu:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
   subs:
     name: Build RHEL bootc image with repo access
     runs-on: ubuntu-latest
@@ -31,15 +25,13 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install qemu dependencies
-        run: |
-          dnf -y install qemu-user-static qemu-user-binfmt
+        run: dnf -y install qemu-user-static qemu-user-binfmt
 
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo
 
-      - name: Test QEMU emulation
-        run: |
-          podman run --rm --platform=linux/arm64 alpine uname -m
+      - name: Retister multiarch
+        run: podman run --rm --privileged docker.io/tonistiigi/binfmt --install all
 
       - name: Install subscription-manager
         run: dnf -y install subscription-manager
