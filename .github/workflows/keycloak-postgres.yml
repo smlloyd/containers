@@ -1,4 +1,4 @@
-name: Build keycloak-crdb image
+name: Build keycloak-postgres image
 
 on:
   workflow_dispatch:
