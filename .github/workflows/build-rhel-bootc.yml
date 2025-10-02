@@ -28,7 +28,8 @@ jobs:
         run: dnf -y install podman buildah skopeo qemu-user-static
 
       - name: Register multiarch
-        run: podman run --rm --privileged docker.io/tonistiigi/binfmt --install all
+        run: podman run --rm --privileged docker.io/multiarch/qemu-user-static:register
+        # run: podman run --rm --privileged docker.io/tonistiigi/binfmt --install all
 
       - name: Install subscription-manager
         run: dnf -y install subscription-manager
