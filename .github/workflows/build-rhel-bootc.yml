@@ -17,7 +17,7 @@ jobs:
       IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: fedora:latest
       options: --privileged
 
     steps:
@@ -25,7 +25,13 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Get container tools in UBI builder
-        run: dnf -y install podman buildah skopeo
+        run: dnf -y install podman buildah skopeo qemu-user-static
+
+      # - name: Register multiarch
+      #   run: podman run --rm --privileged docker.io/tonistiigi/binfmt --install all
+
+      - name: Install subscription-manager
+        run: dnf -y install subscription-manager
 
       - name: Access a subscription via activation key
         env:
@@ -58,9 +64,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           auth_file_path: /run/containers/0/auth.json
-
-      - name: Register multiarch
-        run: podman run --rm --privileged docker.io/tonistiigi/binfmt --install all
 
       - name: Use buildah bud to create the image
         id: build-image
