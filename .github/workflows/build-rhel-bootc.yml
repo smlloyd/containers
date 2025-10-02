@@ -30,16 +30,16 @@ jobs:
       - name: Register multiarch
         run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
 
-      - name: Install subscription-manager
-        run: dnf -y install subscription-manager
-
       - name: Access a subscription via activation key
         env:
           SMDEV_CONTAINER_OFF: 1
           orgid: ${{ secrets.RHT_ORGID }}
           activation_key: ${{ secrets.RHT_ACT_KEY }}
         run: |
+          dnf -y install subscription-manager
           subscription-manager register --org=$orgid --activationkey=$activation_key
+          subscription-manager repos --enable rhel-9-for-aarch64-baseos-rpm
+          subscription-manager repos --enable rhel-9-for-aarch64-appstream-rpm
 
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue
