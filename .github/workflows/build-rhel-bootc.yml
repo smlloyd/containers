@@ -17,7 +17,7 @@ jobs:
       IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: registry.access.redhat.com/ubi10/ubi
       options: --privileged
 
     steps:
