@@ -17,7 +17,7 @@ jobs:
       IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: fedora:latest
       options: --privileged
 
     steps:
@@ -27,8 +27,11 @@ jobs:
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo
 
-      # - name: Install qemu dependency
-      #   run: dnf -y install qemu-user-static
+      - name: Install qemu dependency
+        run: dnf -y install qemu-user-static
+
+      - name: Install subscription-manager
+        run: dnf -y install subscription-manager
 
       - name: Access a subscription via activation key
         env:
