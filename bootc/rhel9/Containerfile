@@ -1,8 +1,11 @@
 FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:d749da40abd9599909951b78bc75c34ae683a005efc8e8deb5bf609dc0e16480
+ARG RHT_ORGID
+ARG RHT_ACT_KEY
 
 COPY ./bootc/rhel9/etc /etc/
 RUN systemctl disable kdump
-RUN subscription-manager facts --update
+RUN subscription-manager register --org=${RHT_ORGID} --activationkey=${RHT_ACT_KEY}
 RUN dnf -y install rhc dnf-plugins-core vim zsh tmux cockpit cockpit-podman tuned
 RUN dnf clean all
 RUN systemctl enable cockpit.socket
+RUN subscription-manager unregister
