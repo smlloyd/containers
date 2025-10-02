@@ -17,7 +17,7 @@ jobs:
       IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: fedora:latest
       options: --privileged
 
     steps:
@@ -27,12 +27,15 @@ jobs:
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo
 
-      - name: Access a subscription via activation key
-        env:
-          SMDEV_CONTAINER_OFF: 1
-          orgid: ${{ secrets.RHT_ORGID }}
-          activation_key: ${{ secrets.RHT_ACT_KEY }}
-        run: subscription-manager register --org=$orgid --activationkey=$activation_key
+      - name: Install qemu dependency
+        run: dnf -y install qemu-user-static
+
+      # - name: Access a subscription via activation key
+      #   env:
+      #     SMDEV_CONTAINER_OFF: 1
+      #     orgid: ${{ secrets.RHT_ORGID }}
+      #     activation_key: ${{ secrets.RHT_ACT_KEY }}
+      #   run: subscription-manager register --org=$orgid --activationkey=$activation_key
 
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue
@@ -65,6 +68,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: latest ${{ github.sha }}
           containerfiles: ${{ inputs.containerfiles }}
+          archs: amd64, arm64
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
