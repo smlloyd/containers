@@ -30,8 +30,6 @@ jobs:
       - name: Install qemu dependencies
         run: |
           dnf -y install qemu-user-static qemu-user-binfmt
-          update-binfmts --enable qemu-arm
-          update-binfmts --enable qemu-aarch64
 
       - name: Install subscription-manager
         run: dnf -y install subscription-manager
