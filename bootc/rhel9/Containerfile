@@ -1,8 +1,7 @@
-# FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:d749da40abd9599909951b78bc75c34ae683a005efc8e8deb5bf609dc0e16480
-FROM registry.redhat.io/rhel9/rhel-bootc:latest
+FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:d749da40abd9599909951b78bc75c34ae683a005efc8e8deb5bf609dc0e16480
 
 COPY ./bootc/rhel9/etc /etc/
 RUN systemctl disable kdump
-RUN dnf -y install rhc dnf-plugins-core vim zsh tmux cockpit cockpit-podman tuned
+RUN dnf -y install --enablerepo '*-appstream-rpms' --enablerepo '*-baseos-rpms' rhc dnf-plugins-core vim zsh tmux cockpit cockpit-podman tuned
 RUN dnf clean all
 RUN systemctl enable cockpit.socket
