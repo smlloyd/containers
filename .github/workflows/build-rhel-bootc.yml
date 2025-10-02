@@ -71,7 +71,7 @@ jobs:
           tags: latest ${{ github.sha }}
           containerfiles: ${{ inputs.containerfiles }}
           archs: arm64, amd64
-          build_args: |
+          build-args: |
             SMDEV_CONTAINER_OFF: 1
             RHT_ORGID: ${{ secrets.RHT_ORGID }}
             RHT_ACT_KEY: ${{ secrets.RHT_ACT_KEY }}
