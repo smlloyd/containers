@@ -4,6 +4,7 @@ ARG RHT_ACT_KEY
 
 COPY ./bootc/rhel9/etc /etc/
 RUN systemctl disable kdump
+RUN echo ${RHT_ORGID}
 RUN subscription-manager register --org=${RHT_ORGID} --activationkey=${RHT_ACT_KEY}
 RUN dnf -y install rhc dnf-plugins-core vim zsh tmux cockpit cockpit-podman tuned
 RUN dnf clean all
