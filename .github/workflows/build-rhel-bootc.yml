@@ -30,14 +30,14 @@ jobs:
       - name: Register multiarch
         run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
 
-      # - name: Access a subscription via activation key
-      #   env:
-      #     SMDEV_CONTAINER_OFF: 1
-      #     orgid: ${{ secrets.RHT_ORGID }}
-      #     activation_key: ${{ secrets.RHT_ACT_KEY }}
-      #   run: |
-      #     dnf -y install subscription-manager
-      #     subscription-manager register --org=$orgid --activationkey=$activation_key
+      - name: Access a subscription via activation key
+        env:
+          SMDEV_CONTAINER_OFF: 1
+          orgid: ${{ secrets.RHT_ORGID }}
+          activation_key: ${{ secrets.RHT_ACT_KEY }}
+        run: |
+          dnf -y install subscription-manager
+          subscription-manager register --org=$orgid --activationkey=$activation_key
 
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue
@@ -70,11 +70,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: latest ${{ github.sha }}
           containerfiles: ${{ inputs.containerfiles }}
-          archs: arm64, amd64
-          build-args: |
-            SMDEV_CONTAINER_OFF: 1
-            RHT_ORGID: ${{ secrets.RHT_ORGID }}
-            RHT_ACT_KEY: ${{ secrets.RHT_ACT_KEY }}
+          archs: amd64, arm64
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
