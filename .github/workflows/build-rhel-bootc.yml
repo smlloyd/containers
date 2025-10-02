@@ -24,13 +24,13 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@v5
 
-      - name: Install qemu dependencies
-        run: dnf -y install qemu-user-static qemu-user-binfmt
+      # - name: Install qemu dependencies
+      #   run: dnf -y install qemu-user-static qemu-user-binfmt
 
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo
 
-      - name: Retister multiarch
+      - name: Register multiarch
         run: podman run --rm --privileged docker.io/tonistiigi/binfmt --install all
 
       - name: Install subscription-manager
