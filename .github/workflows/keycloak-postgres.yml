@@ -1,0 +1,24 @@
+name: Build keycloak-crdb image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "keycloak-postgres/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build_image:
+    name: Build keycloak-postgres image
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      image_name: keycloak-postgres
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    secrets: inherit
