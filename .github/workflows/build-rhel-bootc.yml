@@ -30,6 +30,7 @@ jobs:
       - name: Install qemu dependencies
         run: |
           dnf -y install qemu-user-static qemu-user-binfmt
+          podman run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Install subscription-manager
         run: dnf -y install subscription-manager
@@ -72,7 +73,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: latest ${{ github.sha }}
           containerfiles: ${{ inputs.containerfiles }}
-          archs: amd64, arm64
+          archs: arm64, amd64
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
