@@ -1,4 +1,4 @@
-name: Build RHEL9 bootc-kubevirt image
+name: Build RHEL9 bootc-k3s image
 on:
   workflow_dispatch:
   push:
