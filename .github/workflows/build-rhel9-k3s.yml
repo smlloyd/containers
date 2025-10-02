@@ -1,0 +1,26 @@
+name: Build RHEL9 bootc-kubevirt image
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - bootc/rhel9/Containerfile
+      - bootc/rhel9/tailscale/**
+      - bootc/rhel-common/kubevirt/**
+      - bootc/rhel-common/k3s/**
+    branches:
+      - main
+
+jobs:
+  build_bootc:
+    uses: ./.github/workflows/build-rhel-bootc.yml
+    with:
+      image_name: rhel9/rhel-bootc-k3s
+      containerfiles: |
+        bootc/rhel9/Containerfile
+        bootc/rhel9/tailscale/Containerfile 
+        bootc/rhel-common/kubevirt/Containerfile
+        bootc/rhel-common/k3s/Containerfile
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit

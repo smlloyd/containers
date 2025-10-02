@@ -1,0 +1,2 @@
+COPY ./bootc/rhel-common/k3s/etc /etc/
+RUN dnf -y install k3s-selinux && dnf clean all
