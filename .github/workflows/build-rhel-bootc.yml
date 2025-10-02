@@ -68,7 +68,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: latest ${{ github.sha }}
           containerfiles: ${{ inputs.containerfiles }}
-          archs: arm64, amd64
+          archs: amd64, arm64
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
