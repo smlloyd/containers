@@ -24,13 +24,13 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@v5
 
-      - name: Get container tools in UBI builder
-        run: dnf -y install podman buildah skopeo
-
       - name: Install qemu dependencies
         run: |
           dnf -y install qemu-user-static qemu-user-binfmt
-          podman run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          cat /proc/sys/fs/binfmt_misc/qemu-aarch64
+
+      - name: Get container tools in UBI builder
+        run: dnf -y install podman buildah skopeo
 
       - name: Install subscription-manager
         run: dnf -y install subscription-manager
