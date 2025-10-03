@@ -1,4 +1,4 @@
-name: Template for RHEL bootc builders
+name: Template for bootc builders
 on:
   workflow_call:
     inputs:
@@ -8,6 +8,10 @@ on:
       containerfiles:
         required: true
         type: string
+      archs:
+        required: false
+        type: string
+        default: ""
 
 jobs:
   subs:
@@ -70,7 +74,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: latest ${{ github.sha }}
           containerfiles: ${{ inputs.containerfiles }}
-          archs: amd64, arm64
+          archs: ${{ inputs.archs }}
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
