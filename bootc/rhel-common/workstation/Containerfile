@@ -1,5 +1,0 @@
-COPY ./common/workstation/etc /etc/
-
-RUN dnf -y groupinstall workstation
-RUN dnf clean all
-RUN systemctl set-default graphical.target

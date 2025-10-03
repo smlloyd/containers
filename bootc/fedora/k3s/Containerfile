@@ -1,0 +1,14 @@
+ENV K3S_VERSION=v1.34.1+k3s1
+
+COPY ./bootc/fedora/k3s/etc /etc/
+
+RUN <<EOF
+  curl -sfL https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s \
+  -o /usr/local/bin/k3s
+  chmod +x /usr/local/bin/k3s
+  ln -s /usr/local/bin/k3s /usr/local/bin/crictl
+  ln -s /usr/local/bin/k3s /usr/local/bin/ctr
+  ln -s /usr/local/bin/k3s /usr/local/bin/kubectl
+EOF
+
+RUN dnf -y install k3s-selinux && dnf clean all

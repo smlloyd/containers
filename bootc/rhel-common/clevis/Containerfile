@@ -1,7 +1,10 @@
 COPY ./bootc/common/clevis/usr /usr/
 
-RUN dnf -y install clevis-systemd clevis-dracut
-RUN dnf clean all
-
-RUN set -x; kver=$(cd /usr/lib/modules && echo *); rm /usr/lib/modules/$kver/initramfs.img
-RUN set -x; kver=$(cd /usr/lib/modules && echo *); dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
+RUN <<EOF
+  set -x
+  dnf -y install clevis-systemd clevis-dracut
+  dnf clean all
+  kver=$(cd /usr/lib/modules && echo *)
+  rm /usr/lib/modules/$kver/initramfs.img
+  dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
+EOF
