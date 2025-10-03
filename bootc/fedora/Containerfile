@@ -2,9 +2,9 @@ FROM quay.io/fedora/fedora-bootc:42
 
 COPY ./bootc/fedora/etc /etc/
 RUN <<EOF
-   dnf -y install rhc dnf-plugins-core vim zsh tmux cockpit cockpit-podman tuned
+   dnf -y install dnf5-plugins-core vim zsh tmux cockpit cockpit-podman tuned
    dnf config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
-   dnf install tailscale
+   dnf install -y tailscale
    dnf clean all
    systemctl enable cockpit.socket
    systemctl enable tailscaled
