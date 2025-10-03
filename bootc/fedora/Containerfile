@@ -2,7 +2,7 @@ FROM quay.io/fedora/fedora-bootc:latest@sha256:dccc6bfc59e6af221a62399b351196f5c
 
 COPY ./bootc/fedora/etc /etc/
 RUN <<EOF
-   dnf -y install dnf5-plugins-core vim zsh tmux cockpit cockpit-podman tuned
+   dnf -y install dnf5-plugins vim zsh tmux cockpit cockpit-podman tuned
    dnf config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
    dnf install -y tailscale
    dnf clean all
