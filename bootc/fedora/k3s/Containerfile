@@ -4,7 +4,7 @@ COPY ./bootc/fedora/k3s/etc /etc/
 
 RUN <<EOF
   set -x
-  if [ $(uname -i) = 'aarch64' ]; then
+  if [ $(uname -m) = 'aarch64' ]; then
     SUFFIX='-arm64'
   fi
   curl -sfL https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s${SUFFIX:''} \
