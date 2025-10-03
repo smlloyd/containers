@@ -15,4 +15,7 @@ RUN <<EOF
   ln -s /usr/local/bin/k3s /usr/local/bin/kubectl
 EOF
 
+# CNI plugins expect to write to /opt/cni/bin, so we need to make that writeable
+RUN systemctl enable ostree-state-overlay@opt.service
+
 RUN dnf -y install k3s-selinux && dnf clean all
