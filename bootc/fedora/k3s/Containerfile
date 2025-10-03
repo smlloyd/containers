@@ -7,7 +7,7 @@ RUN <<EOF
   if [ $(uname -m) = 'aarch64' ]; then
     SUFFIX='-arm64'
   fi
-  curl -sfL https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s${SUFFIX:''} \
+  curl -sfL https://github.com/k3s-io/k3s/releases/download/${K3S_VERSION}/k3s${SUFFIX:-''} \
   -o /usr/local/bin/k3s
   chmod +x /usr/local/bin/k3s
   ln -s /usr/local/bin/k3s /usr/local/bin/crictl
