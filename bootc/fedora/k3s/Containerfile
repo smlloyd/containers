@@ -1,6 +1,7 @@
 ENV K3S_VERSION=v1.34.1+k3s1
 
 COPY ./bootc/fedora/k3s/etc /etc/
+COPY ./bootc/fedora/k3s/usr /usr/
 
 # CNI plugins expect to write to /opt/cni/bin, so we need to make that writeable
 RUN systemctl enable ostree-state-overlay@opt.service
@@ -19,4 +20,5 @@ RUN <<EOF
   dnf -y install k3s-selinux iscsi-initiator-utils nfs-utils
   dnf clean all
   systemctl enable iscsid.service
+  systemctl enable k3s.service
 EOF
