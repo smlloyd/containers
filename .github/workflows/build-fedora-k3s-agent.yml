@@ -1,4 +1,4 @@
-name: Build Fedora bootc-k3s image
+name: Build Fedora bootc-k3s-agent image
 on:
   workflow_dispatch:
   push:
