@@ -1,4 +1,5 @@
-ENV K3S_VERSION=v1.34.1+k3s1
+ARG K3S_VERSION=v1.34.1+k3s1
+ARG K3S_AGENT=false
 
 COPY ./bootc/fedora/k3s/etc /etc/
 COPY ./bootc/fedora/k3s/usr /usr/
@@ -21,4 +22,11 @@ RUN <<EOF
   dnf clean all
   systemctl enable iscsid.service
   systemctl enable k3s.service
+EOF
+
+RUN <<EOF
+  set -x
+  if [ ${K3S_AGENT} = 'true' ]; then
+    sed -i '/^ExecStart/s/server/agent/' /etc/systemd/system/k3s.service
+  fi
 EOF

@@ -12,6 +12,10 @@ on:
         required: false
         type: string
         default: ""
+      build-args:
+        required: false
+        type: string
+        default: ""
 
 jobs:
   subs:
@@ -75,6 +79,7 @@ jobs:
           tags: latest ${{ github.sha }}
           containerfiles: ${{ inputs.containerfiles }}
           archs: ${{ inputs.archs }}
+          build-args: ${{ inputs.build-args }}
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr

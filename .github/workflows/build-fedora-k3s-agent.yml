@@ -1,0 +1,27 @@
+name: Build Fedora bootc-k3s image
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - bootc/fedora/Containerfile
+      - bootc/fedora/k3s/**
+      - bootc/common/kubevirt/**
+    branches:
+      - main
+
+jobs:
+  build_bootc:
+    uses: ./.github/workflows/build-rhel-bootc.yml
+    with:
+      image_name: fedora-bootc-k3s-agent
+      archs: x86_64, arm64
+      build-args: |
+        K3S_AGENT=true
+      containerfiles: |
+        bootc/fedora/Containerfile
+        bootc/fedora/k3s/Containerfile
+        bootc/common/kubevirt/Containerfile
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
