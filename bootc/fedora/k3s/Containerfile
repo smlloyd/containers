@@ -3,6 +3,7 @@ ARG K3S_AGENT=false
 
 COPY ./bootc/fedora/k3s/etc /etc/
 COPY ./bootc/fedora/k3s/usr /usr/
+COPY ./bootc/fedora/k3s/var /var/
 
 # CNI plugins expect to write to /opt/cni/bin, so we need to make that writeable
 RUN systemctl enable ostree-state-overlay@opt.service
