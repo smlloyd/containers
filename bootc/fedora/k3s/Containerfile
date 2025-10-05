@@ -29,5 +29,8 @@ RUN <<EOF
   set -x
   if [ ${K3S_AGENT} = 'true' ]; then
     sed -i '/^ExecStart/s/server/agent/' /etc/systemd/system/k3s.service
+    rm /etc/systemd/system/k3s-cleanup-shutdown-pods.service
+  else
+    systemctl enable k3s-cleanup-shutdown-pods.service
   fi
 EOF
