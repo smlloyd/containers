@@ -1,5 +1,6 @@
 ARG K3S_VERSION=v1.34.1+k3s1
 ARG K3S_AGENT=false
+ARG LONGHORN=false
 
 COPY ./bootc/common/k3s/etc /etc/
 COPY ./bootc/common/k3s/usr /usr/
@@ -23,18 +24,17 @@ RUN <<EOF
   ln -s /usr/local/bin/k3s /usr/local/bin/crictl
   ln -s /usr/local/bin/k3s /usr/local/bin/ctr
   ln -s /usr/local/bin/k3s /usr/local/bin/kubectl
-  dnf -y install k3s-selinux iscsi-initiator-utils nfs-utils
-  dnf clean all
-  systemctl enable iscsid.service
+  dnf -y install k3s-selinux
   systemctl enable k3s.service
-EOF
-
-RUN <<EOF
-  set -x
   if [ ${K3S_AGENT} = 'true' ]; then
     sed -i '/^ExecStart/s/server/agent/' /etc/systemd/system/k3s.service
     rm /etc/systemd/system/k3s-cleanup-shutdown-pods.service
   else
     systemctl enable k3s-cleanup-shutdown-pods.service
   fi
+  if [ ${LONGHORN} = 'true' ]; then
+    dnf -y install iscsi-initiator-utils nfs-utils
+    systemctl enable iscsid.service
+  fi
+  dnf clean all
 EOF

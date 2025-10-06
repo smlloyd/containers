@@ -15,6 +15,8 @@ jobs:
     uses: ./.github/workflows/build-rhel-bootc.yml
     with:
       image_name: rhel9/rhel-bootc-k3s
+      build-args: |
+        LONGHORN=true
       containerfiles: |
         bootc/rhel9/Containerfile
         bootc/rhel9/tailscale/Containerfile

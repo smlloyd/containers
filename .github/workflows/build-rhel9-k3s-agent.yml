@@ -17,6 +17,7 @@ jobs:
       image_name: rhel9/rhel-bootc-k3s-agent
       build-args: |
         K3S_AGENT=true
+        LONGHORN=true
       containerfiles: |
         bootc/rhel9/Containerfile
         bootc/rhel9/tailscale/Containerfile

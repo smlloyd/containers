@@ -17,6 +17,7 @@ jobs:
       archs: x86_64, arm64
       build-args: |
         K3S_AGENT=true
+        LONGHORN=true
       containerfiles: |
         bootc/fedora/Containerfile
         bootc/common/k3s/Containerfile
