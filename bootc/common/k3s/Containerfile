@@ -8,7 +8,7 @@ COPY ./bootc/common/k3s/var /var/
 # CNI plugins expect to write to /opt/cni/bin, so we need to make that writeable
 # RUN systemctl enable ostree-state-overlay@opt.service
 RUN <<EOF
-  mkdir /var/opt/cni
+  mkdir -p /var/opt/cni
   ln -sr /var/opt/cni /opt/cni
 EOF
 
