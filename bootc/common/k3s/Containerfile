@@ -4,7 +4,6 @@ ARG LONGHORN=false
 
 COPY ./bootc/common/k3s/etc /etc/
 COPY ./bootc/common/k3s/usr /usr/
-COPY ./bootc/common/k3s/var /var/
 
 # CNI plugins expect to write to /opt/cni/bin, so we need to make that writeable
 # RUN systemctl enable ostree-state-overlay@opt.service
