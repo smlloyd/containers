@@ -1,9 +1,10 @@
-name: Build Fedora bootc-k3s image
+name: Build RHEL9 bootc-k3s image
 on:
   workflow_dispatch:
   push:
     paths:
-      - bootc/fedora/Containerfile
+      - bootc/rhel9/Containerfile
+      - bootc/rhel9/tailscale/**
       - bootc/common/kubevirt/**
       - bootc/common/k3s/**
     branches:
@@ -13,10 +14,10 @@ jobs:
   build_bootc:
     uses: ./.github/workflows/build-rhel-bootc.yml
     with:
-      image_name: fedora-bootc-k3s
-      archs: x86_64, arm64
+      image_name: rhel9/rhel-bootc-k3s
       containerfiles: |
-        bootc/fedora/Containerfile
+        bootc/rhel9/Containerfile
+        bootc/rhel9/tailscale/Containerfile
         bootc/common/kubevirt/Containerfile
         bootc/common/k3s/Containerfile
     permissions:
