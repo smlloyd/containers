@@ -2,6 +2,6 @@ FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:afc1a5c3795b513dd06d6dce6
 
 COPY ./bootc/rhel9/etc /etc/
 RUN systemctl disable kdump
-RUN dnf -y install rhc dnf-plugins-core vim zsh tmux cockpit cockpit-podman tuned
+RUN dnf -y install rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
 RUN dnf clean all
-RUN systemctl enable cockpit.socket
+RUN systemctl enable systemd-resolved.service
