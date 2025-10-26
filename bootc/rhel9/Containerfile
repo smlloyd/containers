@@ -5,3 +5,4 @@ RUN systemctl disable kdump
 RUN dnf -y install rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
 RUN dnf clean all
 RUN systemctl enable systemd-resolved.service
+RUN ln -srf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
