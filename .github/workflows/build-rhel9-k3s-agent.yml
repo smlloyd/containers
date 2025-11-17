@@ -21,8 +21,8 @@ jobs:
       containerfiles: |
         bootc/rhel9/Containerfile
         bootc/rhel9/tailscale/Containerfile
-        bootc/common/kubevirt/Containerfile
         bootc/common/k3s/Containerfile
+        bootc/common/kubevirt/Containerfile
     permissions:
       contents: read
       packages: write
