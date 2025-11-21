@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora-bootc:latest@sha256:658d1dc7924f192dcaa5e1d9c6f86d3c4667f41d9dede5e553a9cac24306d3d2
+FROM quay.io/fedora/fedora-bootc:latest@sha256:3a163c8ecd865539769d6c784a9dc482350a2397f47a26bab5f2cedbc4afb0b4
 
 COPY ./bootc/fedora/etc /etc/
 RUN <<EOF
