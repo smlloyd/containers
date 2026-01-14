@@ -48,16 +48,19 @@ jobs:
           SMDEV_CONTAINER_OFF: 1
           orgid: ${{ secrets.RHT_ORGID }}
           activation_key: ${{ secrets.RHT_ACT_KEY }}
-          RHEL_VERSION: ${{ inputs.rhel_version }}
+          V: ${{ inputs.rhel_version }}
         run: |
           dnf -y install subscription-manager
           subscription-manager register --org=$orgid --activationkey=$activation_key
 
-          # Force Fedora to fetch the specific RHEL version metadata
-          subscription-manager release --set=$RHEL_VERSION
+          subscription-manager repos \
+            --enable="rhel-$V-for-x86_64-baseos-rpms" \
+            --enable="rhel-$V-for-x86_64-appstream-rpms" \
+            --enable="rhel-$V-for-aarch64-baseos-rpms" \
+            --enable="rhel-$V-for-aarch64-appstream-rpms"
 
-          # Hydrate the repo file
-          dnf repolist --disablerepo=* --enablerepo=rhel-$RHEL_VERSION-*
+          # Force a metadata sync to write the URLs into /etc/yum.repos.d/redhat.repo
+          dnf repolist
 
       - name: Debug Subscription Keys
         run: |
