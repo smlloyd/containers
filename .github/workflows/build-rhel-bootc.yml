@@ -80,6 +80,10 @@ jobs:
           containerfiles: ${{ inputs.containerfiles }}
           archs: ${{ inputs.archs }}
           build-args: ${{ inputs.build-args }}
+          # Mount the host certificates into the build container
+          extra-args: |
+            --volume /etc/pki/entitlement:/etc/pki/entitlement:ro
+            --volume /etc/rhsm:/etc/rhsm:ro
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
