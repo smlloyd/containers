@@ -5,7 +5,12 @@ USER root
 RUN rm -f /etc/rhsm-host
 
 COPY ./bootc/rhel9/etc /etc/
-RUN systemctl disable kdump
-RUN dnf install -y --disableplugin=subscription-manager rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
-RUN dnf clean all
-RUN systemctl enable systemd-resolved.service
+RUN <<EOF
+  systemctl disable kdump
+  dnf install -y \
+    --disableplugin=subscription-manager \
+    --setopt=reposdir=/etc/yum.repos.d \
+    rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
+  dnf clean all
+  systemctl enable systemd-resolved.service
+EOF
