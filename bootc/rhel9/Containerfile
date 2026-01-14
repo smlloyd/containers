@@ -5,6 +5,7 @@ USER root
 RUN rm -f /etc/rhsm-host
 
 COPY ./bootc/rhel9/etc /etc/
+RUN ls -l /etc/yum.repos.d/ && cat /etc/yum.repos.d/redhat.repo
 RUN <<EOF
   systemctl disable kdump
   dnf install -y \
