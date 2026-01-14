@@ -2,6 +2,10 @@ name: Template for bootc builders
 on:
   workflow_call:
     inputs:
+      rhel_version:
+        required: false
+        type: string
+        default: ""
       image_name:
         required: true
         type: string
@@ -39,18 +43,21 @@ jobs:
         run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
 
       - name: Access a subscription via activation key
+        if: ${{ inputs.rhel_version != '' }}
         env:
           SMDEV_CONTAINER_OFF: 1
           orgid: ${{ secrets.RHT_ORGID }}
           activation_key: ${{ secrets.RHT_ACT_KEY }}
+          RHEL_VERSION: ${{ inputs.rhel_version }}
         run: |
           dnf -y install subscription-manager
           subscription-manager register --org=$orgid --activationkey=$activation_key
 
-          # FORCE THE REPO FILE TO POPULATE
-          # This command communicates with the Red Hat CDN and writes to redhat.repo
-          subscription-manager repos --list-enabled || true
-          dnf repolist
+          # Force Fedora to fetch the specific RHEL version metadata
+          subscription-manager release --set=$RHEL_VERSION
+
+          # Hydrate the repo file
+          dnf repolist --disablerepo=* --enablerepo=rhel-$RHEL_VERSION-*
 
       - name: Debug Subscription Keys
         run: |
@@ -92,9 +99,7 @@ jobs:
           build-args: ${{ inputs.build-args }}
           # These flags pass the certificates into the build environment
           extra-args: |
-            --volume /etc/pki/entitlement:/etc/pki/entitlement:ro
-            --volume /etc/rhsm:/etc/rhsm:ro
-            --volume /etc/yum.repos.d/redhat.repo:/etc/yum.repos.d/redhat.repo:ro
+            ${{ inputs.rhel_version != '' && '--volume /etc/pki/entitlement:/etc/pki/entitlement:ro --volume /etc/rhsm:/etc/rhsm:ro --volume /etc/yum.repos.d/redhat.repo:/etc/yum.repos.d/redhat.repo:ro' || '' }}
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
@@ -106,7 +111,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
 
       - name: Clean up the subscription
-        if: always()
+        if: always() && inputs.rhel_version != ''
         env:
           SMDEV_CONTAINER_OFF: 1
-        run: subscription-manager unregister
+        run: subscription-manager unregister || true

@@ -12,6 +12,7 @@ jobs:
   build_bootc:
     uses: ./.github/workflows/build-rhel-bootc.yml
     with:
+      rhel_version: 9
       image_name: rhel9/rhel-bootc
       containerfiles: |
         bootc/rhel9/Containerfile
