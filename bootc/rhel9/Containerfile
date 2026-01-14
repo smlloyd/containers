@@ -1,5 +1,6 @@
 FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:850d33e80b19a6ffae0585c2be4ff1258c11c939cbbfe6f007115702f0ec3676
 
+RUN rm -f /etc/rhsm-host
 COPY ./bootc/rhel9/etc /etc/
 RUN systemctl disable kdump
 RUN dnf -y install rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
