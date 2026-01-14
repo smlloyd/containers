@@ -53,16 +53,14 @@ jobs:
           dnf -y install subscription-manager
           subscription-manager register --org=$orgid --activationkey=$activation_key
 
-          # Since we are on Fedora, we must manually enable the RHEL content.
-          # We use wildcards to catch BaseOS and AppStream for the version.
-          subscription-manager repos --enable="rhel-$V-for-*-rpms"
+          subscription-manager repos \
+            --enable="rhel-$V-for-x86_64-baseos-rpms" \
+            --enable="rhel-$V-for-x86_64-appstream-rpms" \
+            --enable="rhel-$V-for-aarch64-baseos-rpms" \
+            --enable="rhel-$V-for-aarch64-appstream-rpms"
 
-          # This is the "Magic" step for Fedora runners: 
-          # It forces the creation of the repo file even if the OS doesn't match.
-          dnf repolist --disablerepo=* --enablerepo="rhel-$V-*"
-
-          # Verify the file is populated before passing to buildah
-          cat /etc/yum.repos.d/redhat.repo
+          # Force a metadata sync to write the URLs into /etc/yum.repos.d/redhat.repo
+          dnf repolist
 
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue
