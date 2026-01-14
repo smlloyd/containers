@@ -2,10 +2,6 @@ name: Template for bootc builders
 on:
   workflow_call:
     inputs:
-      rhel_version:
-        required: false
-        type: string
-        default: ""
       image_name:
         required: true
         type: string
@@ -43,28 +39,13 @@ jobs:
         run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
 
       - name: Access a subscription via activation key
-        if: ${{ inputs.rhel_version != '' }}
         env:
           SMDEV_CONTAINER_OFF: 1
           orgid: ${{ secrets.RHT_ORGID }}
           activation_key: ${{ secrets.RHT_ACT_KEY }}
-          V: ${{ inputs.rhel_version }}
         run: |
           dnf -y install subscription-manager
           subscription-manager register --org=$orgid --activationkey=$activation_key
-           
-          # We skip 'subscription-manager repos --enable' because it fails on Fedora.
-          # Instead, we tell DNF to try and list a RHEL repo. 
-          # This triggers the manager to write the 'redhat.repo' file metadata.
-          dnf repolist --disablerepo=* --enablerepo="rhel-$V-*" || true
-
-          # If the file is still empty, we manually 'hydrate' it by touching the 
-          # configuration that tells the manager to include all available content.
-          subscription-manager config --rhsm.manage_repos=1
-
-          # Verify the file exists and has content
-          ls -l /etc/yum.repos.d/redhat.repo
-          cat /etc/yum.repos.d/redhat.repo
 
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue
@@ -99,9 +80,6 @@ jobs:
           containerfiles: ${{ inputs.containerfiles }}
           archs: ${{ inputs.archs }}
           build-args: ${{ inputs.build-args }}
-          # These flags pass the certificates into the build environment
-          extra-args: |
-            ${{ inputs.rhel_version != '' && '--volume /etc/pki/entitlement:/etc/pki/entitlement:ro --volume /etc/rhsm:/etc/rhsm:ro --volume /etc/yum.repos.d/redhat.repo:/etc/yum.repos.d/redhat.repo:ro' || '' }}
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
@@ -113,7 +91,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
 
       - name: Clean up the subscription
-        if: always() && inputs.rhel_version != ''
+        if: always()
         env:
           SMDEV_CONTAINER_OFF: 1
-        run: subscription-manager unregister || true
+        run: subscription-manager unregister
