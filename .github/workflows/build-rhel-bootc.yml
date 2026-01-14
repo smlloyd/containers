@@ -47,6 +47,11 @@ jobs:
           dnf -y install subscription-manager
           subscription-manager register --org=$orgid --activationkey=$activation_key
 
+          # FORCE THE REPO FILE TO POPULATE
+          # This command communicates with the Red Hat CDN and writes to redhat.repo
+          subscription-manager repos --list-enabled || true
+          dnf repolist
+
       - name: Debug Subscription Keys
         run: |
           ls -l /etc/pki/entitlement
