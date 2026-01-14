@@ -2,12 +2,16 @@ FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:850d33e80b19a6ffae0585c2b
 
 USER root
 
-# 1. Prevent subscription-manager from automatically re-enabling its dnf plugin
-# 2. Kill the 'container-mode' trigger file
-# 3. Force the plugin to stay disabled
-RUN subscription-manager config --rhsm.auto_enable_yum_plugins=0 && \
-    rm -f /etc/rhsm-host && \
-    sed -i 's/enabled=1/enabled=0/g' /etc/yum/pluginconf.d/subscription-manager.conf
+# 1. Manually disable the plugin in the config file
+# 2. Manually set auto_enable_yum_plugins to 0 in the rhsm.conf file via sed
+# 3. Remove the container-mode trigger file
+RUN <<EOF
+  if [ -f /etc/rhsm/rhsm.conf ]; then \
+    sed -i 's/auto_enable_yum_plugins = 1/auto_enable_yum_plugins = 0/g' /etc/rhsm/rhsm.conf; \
+  fi
+  rm -f /etc/rhsm-host
+  sed -i 's/enabled=1/enabled=0/g' /etc/yum/pluginconf.d/subscription-manager.conf
+EOF
 
 COPY ./bootc/rhel9/etc /etc/
 RUN systemctl disable kdump
