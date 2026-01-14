@@ -52,15 +52,19 @@ jobs:
         run: |
           dnf -y install subscription-manager
           subscription-manager register --org=$orgid --activationkey=$activation_key
+           
+          # We skip 'subscription-manager repos --enable' because it fails on Fedora.
+          # Instead, we tell DNF to try and list a RHEL repo. 
+          # This triggers the manager to write the 'redhat.repo' file metadata.
+          dnf repolist --disablerepo=* --enablerepo="rhel-$V-*" || true
 
-          subscription-manager repos \
-            --enable="rhel-$V-for-x86_64-baseos-rpms" \
-            --enable="rhel-$V-for-x86_64-appstream-rpms" \
-            --enable="rhel-$V-for-aarch64-baseos-rpms" \
-            --enable="rhel-$V-for-aarch64-appstream-rpms"
+          # If the file is still empty, we manually 'hydrate' it by touching the 
+          # configuration that tells the manager to include all available content.
+          subscription-manager config --rhsm.manage_repos=1
 
-          # Force a metadata sync to write the URLs into /etc/yum.repos.d/redhat.repo
-          dnf repolist
+          # Verify the file exists and has content
+          ls -l /etc/yum.repos.d/redhat.repo
+          cat /etc/yum.repos.d/redhat.repo
 
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue
