@@ -2,19 +2,10 @@ FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:850d33e80b19a6ffae0585c2b
 
 USER root
 
-# 1. Manually disable the plugin in the config file
-# 2. Manually set auto_enable_yum_plugins to 0 in the rhsm.conf file via sed
-# 3. Remove the container-mode trigger file
-RUN <<EOF
-  if [ -f /etc/rhsm/rhsm.conf ]; then \
-    sed -i 's/auto_enable_yum_plugins = 1/auto_enable_yum_plugins = 0/g' /etc/rhsm/rhsm.conf; \
-  fi
-  rm -f /etc/rhsm-host
-  sed -i 's/enabled=1/enabled=0/g' /etc/yum/pluginconf.d/subscription-manager.conf
-EOF
+RUN rm -f /etc/rhsm-host
 
 COPY ./bootc/rhel9/etc /etc/
 RUN systemctl disable kdump
-RUN dnf -y install rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
+RUN dnf install -y --disableplugin=subscription-manager rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
 RUN dnf clean all
 RUN systemctl enable systemd-resolved.service
