@@ -3,7 +3,7 @@ FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:850d33e80b19a6ffae0585c2b
 # Force DNF to look at the mounted certificates
 USER root
 RUN rm -f /etc/rhsm-host && \
-    sed -i 's/enabled=0/enabled=1/g' /etc/yum/pluginconf.d/subscription-manager.conf
+    sed -i 's/enabled=1/enabled=0/g' /etc/yum/pluginconf.d/subscription-manager.conf
 RUN ls -l /etc/pki/entitlement && subscription-manager status
 
 COPY ./bootc/rhel9/etc /etc/
