@@ -4,8 +4,8 @@ on:
   push:
     paths:
       - bootc/fedora/Containerfile
-      - bootc/common/k3s/**
       - bootc/common/kubevirt/**
+      - bootc/common/k3s/**
     branches:
       - main
 
@@ -20,8 +20,8 @@ jobs:
         LONGHORN=true
       containerfiles: |
         bootc/fedora/Containerfile
-        bootc/common/k3s/Containerfile
         bootc/common/kubevirt/Containerfile
+        bootc/common/k3s/Containerfile
     permissions:
       contents: read
       packages: write
