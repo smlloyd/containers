@@ -1,4 +1,4 @@
-FROM registry.redhat.io/rhel10/rhel-bootc:latest@sha256:21e3f2d8cd7c8b1e3392657e97af387a06579e54060d53d587c763fa040f6097
+FROM registry.redhat.io/rhel10/rhel-bootc:latest@sha256:0bca9e3428b39a8f72ed5829953d83e29c4afd8dd7b17e074ace9ab5de7c7d6e
 
 COPY ./bootc/rhel10/etc /etc/
 RUN systemctl disable kdump
