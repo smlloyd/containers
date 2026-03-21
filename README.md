@@ -27,6 +27,19 @@ Customised versions of popular services, often including the Doppler CLI for sec
 ## Common Features
 
 - **Secret Management**: Most service containers include the [Doppler CLI](https://www.doppler.com/) to inject secrets at runtime.
+- **Composable bootc Modules**: The `bootc/common/` directory contains reusable modules that can be layered during image builds:
+  - **Doppler (`bootc/common/doppler/`)**: Installs the Doppler CLI for secret management.
+  - **Tailscale (`bootc/common/tailscale/`)**: Installs Tailscale and includes an automated registration service.
+
+### Tailscale Registration (bootc)
+When using the composable Tailscale module, hosts can automatically register themselves using a Doppler secret.
+
+1. **Provide Doppler Token**: On the host (via Ignition, Ansible, or manual setup), create the file `/etc/default/tailscale-register`:
+   ```bash
+   DOPPLER_TOKEN=dp.pt.xxxxxx
+   ```
+2. **Registration**: The `tailscale-register.service` will automatically run at boot, fetch the `TS_AUTHKEY` from Doppler, and execute `tailscale up`.
+
 - **Internal Trust**: Custom CA certificates (`Lloyd+CA.crt`) are pre-installed in the trust store.
 - **CI/CD**: Images are automatically built and published via [GitHub Actions](./.github/workflows/).
 

@@ -1,0 +1,16 @@
+# Installs Tailscale and enables registration service
+ARG DISTRO=rhel
+ARG DISTRO_VER=10
+
+RUN if [ "$DISTRO" = "fedora" ]; then \
+      dnf config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo; \
+    else \
+      dnf config-manager --add-repo https://pkgs.tailscale.com/stable/${DISTRO}/${DISTRO_VER}/tailscale.repo; \
+    fi && \
+    dnf install -y tailscale && \
+    dnf clean all && \
+    systemctl enable tailscaled
+
+# Note: this requires Doppler to be installed via the common doppler module
+COPY ./bootc/common/tailscale/usr /usr/
+RUN systemctl enable tailscale-register.service

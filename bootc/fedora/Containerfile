@@ -3,8 +3,5 @@ FROM quay.io/fedora/fedora-bootc:latest@sha256:8bc457e4ed309e2956d61248f955bd07d
 COPY ./bootc/fedora/etc /etc/
 RUN <<EOF
    dnf -y install dnf5-plugins vim tmux tuned
-   dnf config-manager addrepo --from-repofile=https://pkgs.tailscale.com/stable/fedora/tailscale.repo
-   dnf install -y tailscale
    dnf clean all
-   systemctl enable tailscaled
 EOF

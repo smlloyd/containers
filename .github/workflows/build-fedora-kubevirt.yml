@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - bootc/fedora/Containerfile
+      - bootc/common/doppler/**
+      - bootc/common/tailscale/**
       - bootc/common/kubevirt/**
     branches:
       - main
@@ -14,8 +16,12 @@ jobs:
     with:
       image_name: fedora-bootc-kubevirt
       archs: x86_64, arm64
+      build-args: |
+        DISTRO=fedora
       containerfiles: |
         bootc/fedora/Containerfile
+        bootc/common/doppler/Containerfile
+        bootc/common/tailscale/Containerfile
         bootc/common/kubevirt/Containerfile
     permissions:
       contents: read

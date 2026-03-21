@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - bootc/fedora/Containerfile
+      - bootc/common/doppler/**
+      - bootc/common/tailscale/**
       - bootc/common/kubevirt/**
       - bootc/common/k3s/**
     branches:
@@ -16,9 +18,12 @@ jobs:
       image_name: fedora-bootc-k3s
       archs: x86_64, arm64
       build-args: |
+        DISTRO=fedora
         LONGHORN=true
       containerfiles: |
         bootc/fedora/Containerfile
+        bootc/common/doppler/Containerfile
+        bootc/common/tailscale/Containerfile
         bootc/common/kubevirt/Containerfile
         bootc/common/k3s/Containerfile
     permissions:

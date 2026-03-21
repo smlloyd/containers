@@ -7,4 +7,4 @@ Configurations for RHEL 9-based bootable containers.
 - **GCP**: Optimized for Google Cloud (using `bootc/rhel9/gcp`).
 - **K3s**: Includes K3s Kubernetes distribution (using `bootc/common/k3s`).
 - **Kubevirt**: Includes Kubevirt components (using `bootc/common/kubevirt`).
-- **Tailscale**: Includes Tailscale client (using `bootc/rhel9/tailscale`).
+- **Tailscale**: Includes Tailscale client (using `bootc/common/tailscale`).

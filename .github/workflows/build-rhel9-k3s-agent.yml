@@ -4,7 +4,8 @@ on:
   push:
     paths:
       - bootc/rhel9/Containerfile
-      - bootc/rhel9/tailscale/**
+      - bootc/common/doppler/**
+      - bootc/common/tailscale/**
       - bootc/common/kubevirt/**
       - bootc/common/k3s/**
     branches:
@@ -17,10 +18,12 @@ jobs:
       image_name: rhel9/rhel-bootc-k3s-agent
       build-args: |
         K3S_AGENT=true
+        DISTRO_VER=9
         LONGHORN=true
       containerfiles: |
         bootc/rhel9/Containerfile
-        bootc/rhel9/tailscale/Containerfile
+        bootc/common/doppler/Containerfile
+        bootc/common/tailscale/Containerfile
         bootc/common/k3s/Containerfile
         bootc/common/kubevirt/Containerfile
     permissions:
