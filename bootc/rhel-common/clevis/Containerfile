@@ -1,4 +1,4 @@
-COPY ./bootc/common/clevis/usr /usr/
+COPY ./bootc/rhel-common/clevis/usr /usr/
 
 RUN <<EOF
   set -x
