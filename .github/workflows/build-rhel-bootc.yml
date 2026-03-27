@@ -36,7 +36,7 @@ jobs:
         run: dnf -y install podman buildah skopeo qemu-user-static
 
       - name: Register multiarch
-        run: for conf in /usr/lib/binfmt.d/qemu-*.conf; do cat "$conf" > /proc/sys/fs/binfmt_misc/register; done
+        run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
 
       - name: Access a subscription via activation key
         env:
