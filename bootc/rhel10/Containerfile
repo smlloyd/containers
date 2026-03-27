@@ -1,6 +1,7 @@
 FROM registry.redhat.io/rhel10/rhel-bootc:latest@sha256:d7303f5d229193fc4ff885d3c71a3e4a4e1a966a6f49740f1a1fe4258fbf865a
 
 COPY ./bootc/rhel10/etc /etc/
+COPY ./bootc/rhel10/usr /usr/
 RUN <<EOF
   systemctl disable kdump
   dnf install -y rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
