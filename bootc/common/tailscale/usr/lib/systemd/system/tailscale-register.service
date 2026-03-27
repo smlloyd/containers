@@ -9,7 +9,7 @@ Type=oneshot
 Environment=HOME=/root
 EnvironmentFile=/etc/doppler.env
 # Only run registration if tailscale is not already logged in/online
-ExecStart=/usr/bin/sh -c 'tailscale status >/dev/null 2>&1 || /usr/bin/doppler run -- tailscale up --authkey=$TS_AUTHKEY --hostname=%H'
+ExecStart=/usr/bin/sh -c 'tailscale status >/dev/null 2>&1 || /usr/bin/doppler run -- tailscale up --authkey=$$TS_AUTHKEY --hostname=%H'
 RemainAfterExit=yes
 
 [Install]
