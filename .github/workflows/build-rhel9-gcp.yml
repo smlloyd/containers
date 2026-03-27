@@ -1,9 +1,13 @@
 name: Build RHEL9 bootc-gcp image
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Build RHEL9 bootc image"]
+    types: [completed]
+    branches: [main]
   push:
     paths:
-      - bootc/rhel9/Containerfile
+      - bootc/rhel9/variant.Containerfile
       - bootc/common/doppler/**
       - bootc/common/tailscale/**
       - bootc/rhel9/gcp/**
@@ -12,13 +16,14 @@ on:
 
 jobs:
   build_bootc:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     uses: ./.github/workflows/build-rhel-bootc.yml
     with:
       image_name: rhel9/rhel-bootc-gcp
       build-args: |
         DISTRO_VER=9
       containerfiles: |
-        bootc/rhel9/Containerfile
+        bootc/rhel9/variant.Containerfile
         bootc/common/doppler/Containerfile
         bootc/common/tailscale/Containerfile
         bootc/rhel9/gcp/Containerfile

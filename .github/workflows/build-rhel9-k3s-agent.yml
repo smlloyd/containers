@@ -1,9 +1,13 @@
 name: Build RHEL9 bootc-k3s-agent image
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Build RHEL9 bootc image"]
+    types: [completed]
+    branches: [main]
   push:
     paths:
-      - bootc/rhel9/Containerfile
+      - bootc/rhel9/variant.Containerfile
       - bootc/common/doppler/**
       - bootc/common/tailscale/**
       - bootc/common/kubevirt/**
@@ -13,6 +17,7 @@ on:
 
 jobs:
   build_bootc:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     uses: ./.github/workflows/build-rhel-bootc.yml
     with:
       image_name: rhel9/rhel-bootc-k3s-agent
@@ -21,7 +26,7 @@ jobs:
         DISTRO_VER=9
         LONGHORN=true
       containerfiles: |
-        bootc/rhel9/Containerfile
+        bootc/rhel9/variant.Containerfile
         bootc/common/doppler/Containerfile
         bootc/common/tailscale/Containerfile
         bootc/common/k3s/Containerfile

@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - bootc/fedora/Containerfile
+      - bootc/fedora/etc/**
       - bootc/common/doppler/**
       - bootc/common/tailscale/**
       - bootc/common/kubevirt/**
