@@ -25,7 +25,7 @@ jobs:
       IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
     container:
-      image: fedora:latest
+      image: registry.fedoraproject.org/fedora:latest
       options: --privileged
 
     steps:
@@ -36,7 +36,7 @@ jobs:
         run: dnf -y install podman buildah skopeo qemu-user-static
 
       - name: Register multiarch
-        run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
+        run: podman run --rm --privileged --cgroups=disabled ghcr.io/tonistiigi/binfmt --install all
 
       - name: Access a subscription via activation key
         env:
