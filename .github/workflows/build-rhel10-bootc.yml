@@ -5,6 +5,7 @@ on:
     paths:
       - bootc/rhel10/Containerfile
       - bootc/rhel10/etc/**
+      - bootc/rhel10/usr/**
     branches:
       - main
 
