@@ -2,6 +2,7 @@ FROM quay.io/fedora/fedora-bootc:latest@sha256:66a119b56c1948d1d4eb5bd1fc0872069
 
 COPY ./bootc/fedora/etc /etc/
 RUN <<EOF
-   dnf -y install dnf5-plugins vim tmux tuned
-   dnf clean all
+  systemctl mask rpm-ostree-countme.time
+  dnf -y install dnf5-plugins vim tmux tuned
+  dnf clean all
 EOF

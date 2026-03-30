@@ -3,6 +3,7 @@ FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:1bd06193c15a2ce276bfb7c72
 COPY ./bootc/rhel9/etc /etc/
 RUN <<EOF
   systemctl disable kdump
+  systemctl mask rpm-ostree-countme.time
   dnf install -y rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
   dnf clean all
   systemctl enable systemd-resolved.service

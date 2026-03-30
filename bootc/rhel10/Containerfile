@@ -4,6 +4,7 @@ COPY ./bootc/rhel10/etc /etc/
 COPY ./bootc/rhel10/usr /usr/
 RUN <<EOF
   systemctl disable kdump
+  systemctl mask rpm-ostree-countme.time
   dnf install -y rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
   dnf clean all
   systemctl enable systemd-resolved.service
