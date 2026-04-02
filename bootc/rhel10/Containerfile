@@ -1,4 +1,4 @@
-FROM registry.redhat.io/rhel10/rhel-bootc:latest@sha256:d7303f5d229193fc4ff885d3c71a3e4a4e1a966a6f49740f1a1fe4258fbf865a
+FROM registry.redhat.io/rhel10/rhel-bootc:latest@sha256:21ad1011c99bf601d931d043e25541da72c2fe14de33c78f62d4a483ed425c9a
 
 COPY ./bootc/rhel10/etc /etc/
 COPY ./bootc/rhel10/usr /usr/
