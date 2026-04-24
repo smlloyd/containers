@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended"
   ],
+  "dependencyDashboardApproval": false,
   "hostRules": [
     {
       "matchHost": "https://registry.redhat.io",
