@@ -1,4 +1,4 @@
-ARG KC_VERSION=latest@sha256:26ae26445475f7fac5f90ee138b1bdb64324f5815fb16133ffdbdb122d97c4d8
+ARG KC_VERSION=latest@sha256:dea26401d06341095cc4ea9d66896200b55de5ca1daa1d2fcbe58493afa6e0ad
 
 FROM quay.io/keycloak/keycloak:${KC_VERSION} AS builder
 
