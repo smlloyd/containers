@@ -1,4 +1,4 @@
-FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:a87b8495f1ddda89471fcbd4b4ffd5e5de5ec45d1574a43c68bd853d5e77f257
+FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:de50721653824f32a9c27e8d0b3c060446f39c30d5383291a68aa3b7a5d63e38
 
 COPY ./bootc/rhel9/etc /etc/
 RUN <<EOF
