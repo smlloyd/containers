@@ -3,6 +3,7 @@ FROM quay.io/fedora/fedora-bootc:latest@sha256:3c6529ad40fff1ded3be667cc6f0a9fb5
 COPY ./bootc/fedora/etc /etc/
 RUN <<EOF
   systemctl mask rpm-ostree-countme.time
+  update-ca-trust
   dnf -y install dnf5-plugins vim tmux tuned
   dnf clean all
 EOF
