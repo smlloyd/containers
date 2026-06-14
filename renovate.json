@@ -4,6 +4,12 @@
     "config:recommended"
   ],
   "dependencyDashboardApproval": false,
+  "packageRules": [
+    {
+      "matchPackageNames": ["*"],
+      "dependencyDashboardApproval": false
+    }
+  ],
   "hostRules": [
     {
       "matchHost": "https://registry.redhat.io",
