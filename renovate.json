@@ -3,6 +3,7 @@
   "extends": [
     "config:recommended"
   ],
+  "mode": "auto",
   "dependencyDashboardApproval": false,
   "packageRules": [
     {
