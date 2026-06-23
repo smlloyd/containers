@@ -1,4 +1,4 @@
-FROM docker.io/traefik:latest@sha256:5a52522fa05731d9c537540f873ba8c4842e83354c27275b747145bab75da120
+FROM docker.io/traefik:latest@sha256:e4d98158c01ad752fc1071d4e9573788747230d902cdde00a772516e692d07c9
 
 # Install Doppler CLI
 RUN wget -q -t3 'https://packages.doppler.com/public/cli/rsa.8004D9FF50437357.key' -O /etc/apk/keys/cli@doppler-8004D9FF50437357.rsa.pub && \
