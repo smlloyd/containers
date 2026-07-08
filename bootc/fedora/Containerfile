@@ -6,4 +6,5 @@ RUN <<EOF
   update-ca-trust
   dnf -y install dnf5-plugins vim tmux tuned
   dnf clean all
+  ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
 EOF
