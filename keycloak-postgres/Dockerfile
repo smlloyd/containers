@@ -30,4 +30,5 @@ COPY --from=ubi-micro-build /usr/bin/doppler /usr/bin/doppler
 
 ENV KC_DB=postgres
 
-ENTRYPOINT ["doppler", "run", "--", "/opt/keycloak/bin/kc.sh"]
+COPY --chmod=755 doppler-entrypoint.sh /doppler-entrypoint.sh
+ENTRYPOINT ["/doppler-entrypoint.sh"]

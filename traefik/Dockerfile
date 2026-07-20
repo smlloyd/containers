@@ -5,4 +5,5 @@ RUN wget -q -t3 'https://packages.doppler.com/public/cli/rsa.8004D9FF50437357.ke
     echo 'https://packages.doppler.com/public/cli/alpine/any-version/main' | tee -a /etc/apk/repositories && \
     apk add doppler
 
-ENTRYPOINT ["doppler", "run", "--", "/entrypoint.sh"]
+COPY --chmod=755 doppler-entrypoint.sh /doppler-entrypoint.sh
+ENTRYPOINT ["/doppler-entrypoint.sh"]
