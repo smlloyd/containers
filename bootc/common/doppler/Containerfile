@@ -1,5 +1,5 @@
 # Installs the Doppler CLI for secret management
-COPY doppler-ready.service /usr/lib/systemd/system/doppler-ready.service
+COPY bootc/common/doppler/doppler-ready.service /usr/lib/systemd/system/doppler-ready.service
 
 RUN rpm --import 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' && \
     curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/config.rpm.txt' | sed '/^sslcacert=/d' | tee /etc/yum.repos.d/doppler-cli.repo && \
