@@ -38,5 +38,4 @@ ENV KC_TRANSACTION_JTA_ENABLED=false
 ENV KC_DB_URL_PROPERTIES=useCockroachMetadata=true
 
 
-COPY --chmod=755 doppler-entrypoint.sh /doppler-entrypoint.sh
-ENTRYPOINT ["/doppler-entrypoint.sh"]
+ENTRYPOINT ["doppler", "run", "--", "/opt/keycloak/bin/kc.sh"]
