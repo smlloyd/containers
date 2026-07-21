@@ -13,5 +13,6 @@ RUN dnf -y remove docker \
 RUN dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
 RUN dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin jq
 RUN dnf clean all
+RUN mkdir -p /etc/docker && echo '{"firewall-backend":"nftables"}' > /etc/docker/daemon.json
 RUN systemctl enable docker
 RUN groupdel docker
