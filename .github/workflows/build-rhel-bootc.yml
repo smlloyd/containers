@@ -83,7 +83,7 @@ jobs:
 
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
-        uses: redhat-actions/push-to-registry@v2
+        uses: redhat-actions/push-to-registry@v3
         if: github.ref_name == github.event.repository.default_branch
         with:
           image: ${{ steps.build-image.outputs.image }}
