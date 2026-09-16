@@ -5,6 +5,7 @@ on:
     paths:
       - bootc/fedora/Containerfile
       - bootc/fedora/etc/**
+      - bootc/common/nm-external-dns/**
       - bootc/common/doppler/**
       - bootc/common/tailscale/**
       - bootc/common/kubevirt/**

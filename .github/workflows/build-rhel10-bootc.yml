@@ -6,6 +6,7 @@ on:
       - bootc/rhel10/Containerfile
       - bootc/rhel10/etc/**
       - bootc/rhel10/usr/**
+      - bootc/common/nm-external-dns/**
     branches:
       - main
 
