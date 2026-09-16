@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+nmcli -t --escape no -f DEVICE,STATE,CONNECTION device status |
+while IFS=: read -r device state connection; do
+  [ -n "$device" ] || continue
+  [ "$state" = "connected (externally)" ] || continue
+
+  case "$connection" in
+    ""|--)
+      echo "nm-reapply-external-connections: skipping $device without an associated profile" >&2
+      continue
+      ;;
+  esac
+
+  echo "nm-reapply-external-connections: reapplying '$connection' on $device" >&2
+  nmcli --wait 30 connection up id "$connection" ifname "$device"
+done

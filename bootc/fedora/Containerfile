@@ -1,8 +1,10 @@
 FROM quay.io/fedora/fedora-bootc:latest@sha256:38ef702a1366d4ae6645dbe77192fe50f91dce487e6c6fffc046f9ad7e9ffa74
 
 COPY ./bootc/fedora/etc /etc/
+COPY ./bootc/common/nm-external-dns/usr /usr/
 RUN <<EOF
-  systemctl mask rpm-ostree-countme.time
+  systemctl mask rpm-ostree-countme.timer
+  systemctl enable nm-reapply-external-connections.service
   update-ca-trust
   dnf -y install dnf5-plugins vim tmux tuned
   dnf clean all

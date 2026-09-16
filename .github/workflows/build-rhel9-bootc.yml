@@ -5,6 +5,7 @@ on:
     paths:
       - bootc/rhel9/Containerfile
       - bootc/rhel9/etc/**
+      - bootc/common/nm-external-dns/**
     branches:
       - main
 
