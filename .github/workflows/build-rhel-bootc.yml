@@ -17,6 +17,13 @@ on:
         type: string
         default: ""
 
+# Serializes builds per image so two merges landing close together can't race
+# to push `latest` out of order (an earlier commit's build finishing after a
+# later commit's build would otherwise clobber the newer image).
+concurrency:
+  group: bootc-build-${{ github.repository }}-${{ inputs.image_name }}
+  cancel-in-progress: false
+
 jobs:
   subs:
     name: Build RHEL bootc image with repo access
