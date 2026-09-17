@@ -1,4 +1,4 @@
-FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:31aefe7ef84cb79e979a1fd337724607b5384a534ef57751b971b55ade841508
+FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:84089a68b1cd9d7a7740b4d7779291ab2a11d8c958ab336bf01a84ca4c33ce65
 
 COPY ./bootc/rhel9/etc /etc/
 COPY ./bootc/common/nm-external-dns/usr /usr/
