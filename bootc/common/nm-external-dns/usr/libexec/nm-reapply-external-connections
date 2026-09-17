@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+# Wait for NM to finish classifying devices before taking a snapshot.
+nm-online -s -q -t 30 || true
+
 nmcli -t --escape no -f DEVICE,STATE,CONNECTION device status |
 while IFS=: read -r device state connection; do
   [ -n "$device" ] || continue
