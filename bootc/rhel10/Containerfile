@@ -2,11 +2,9 @@ FROM registry.redhat.io/rhel10/rhel-bootc:latest@sha256:db54abbcbd24f834cf923d28
 
 COPY ./bootc/rhel10/etc /etc/
 COPY ./bootc/rhel10/usr /usr/
-COPY ./bootc/common/nm-external-dns/usr /usr/
 RUN <<EOF
   systemctl disable kdump
   systemctl mask rpm-ostree-countme.timer
-  systemctl enable nm-reapply-external-connections.service
   dnf install -y rhc dnf-plugins-core vim zsh tmux systemd-resolved tuned
   dnf clean all
   systemctl enable systemd-resolved.service
