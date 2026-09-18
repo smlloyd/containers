@@ -39,6 +39,16 @@ jobs:
       - name: Clone the repository
         uses: actions/checkout@v7
 
+      # Cache scope is per calling repository, so this never crosses repo
+      # boundaries even though this workflow file is public.
+      - name: Cache dnf package downloads
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/dnf
+          key: dnf-fedora-latest-bootc-tools-v1
+          restore-keys: |
+            dnf-fedora-latest-bootc-tools-
+
       - name: Get container tools in UBI builder
         run: dnf -y install podman buildah skopeo qemu-user-static
 
