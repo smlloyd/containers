@@ -9,7 +9,9 @@ RUN if [ "$DISTRO" = "fedora" ]; then \
     fi && \
     dnf install -y tailscale && \
     dnf clean all && \
-    systemctl enable tailscaled
+    systemctl enable tailscaled && \
+    # systemd-resolved's resolvconf shim makes tailscaled pick openresolv mode and clobber /etc/resolv.conf instead of using its systemd-resolved D-Bus manager
+    rm -f /usr/sbin/resolvconf /usr/bin/resolvconf
 
 # Note: this requires Doppler to be installed via the common doppler module
 COPY ./bootc/common/tailscale/usr /usr/
