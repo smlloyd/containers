@@ -1,4 +1,4 @@
-FROM docker.io/tailscale/tailscale:stable@sha256:8c42c4574ab066384fcb72f69e086a2ff1dd3652eb6f56856cee34bcf0d2f680
+FROM docker.io/tailscale/tailscale:stable@sha256:2667499ed87ae29218f292556ba062918402dd5e92e93637af14867e4df12dd3
 
 # Install Doppler CLI
 RUN wget -q -t3 'https://packages.doppler.com/public/cli/rsa.8004D9FF50437357.key' -O /etc/apk/keys/cli@doppler-8004D9FF50437357.rsa.pub && \
