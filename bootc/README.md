@@ -11,7 +11,7 @@ This directory contains configurations for building bootable container images ba
 
 - **Shared Resources**:
   - `common/`: configurations shared across multiple distributions (e.g., `k3s`, `kubevirt`).
-  - `rhel-common/`: configurations shared across RHEL versions (e.g., `clevis`, `docker`, `k3s` specific to RHEL).
+  - `rhel-common/`: configurations shared across RHEL versions (e.g., `docker`, `k3s` specific to RHEL).
 
 ## Usage
 
