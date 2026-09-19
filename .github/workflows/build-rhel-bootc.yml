@@ -42,7 +42,7 @@ jobs:
       # Cache scope is per calling repository, so this never crosses repo
       # boundaries even though this workflow file is public.
       - name: Cache dnf package downloads
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /var/cache/dnf
           key: dnf-fedora-latest-bootc-tools-v1
