@@ -16,17 +16,123 @@ on:
         required: false
         type: string
         default: ""
+      # Newline-separated build input paths. When set, same-repo PR builds are
+      # pushed as `tree-<hash>` and a default-branch push with a matching tag
+      # promotes that image instead of rebuilding. Only safe when every FROM
+      # under these paths is pinned by digest.
+      source_path:
+        required: false
+        type: string
+        default: ""
 
 # Serializes builds per image so two merges landing close together can't race
 # to push `latest` out of order (an earlier commit's build finishing after a
-# later commit's build would otherwise clobber the newer image).
+# later commit's build would otherwise clobber the newer image). PRs get their
+# own group: a group holds only one pending run, so a queued PR build would
+# otherwise cancel a pending default-branch build.
 concurrency:
-  group: bootc-build-${{ github.repository }}-${{ inputs.image_name }}
-  cancel-in-progress: false
+  group: bootc-build-${{ github.repository }}-${{ inputs.image_name }}${{ github.event_name == 'pull_request' && format('-pr-{0}', github.event.pull_request.number) || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  plan:
+    name: Decide whether to build or promote
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
+      SOURCE_PATH: ${{ inputs.source_path }}
+      CONTAINERFILES: ${{ inputs.containerfiles }}
+      BUILD_ARGS: ${{ inputs.build-args }}
+      ARCHS: ${{ inputs.archs }}
+      SHA: ${{ github.sha }}
+      EVENT: ${{ github.event_name }}
+      IS_DEFAULT: ${{ github.ref_name == github.event.repository.default_branch }}
+      SAME_REPO_PR: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    outputs:
+      promote: ${{ steps.plan.outputs.promote }}
+      tree_tag: ${{ steps.plan.outputs.tree_tag }}
+      tags: ${{ steps.plan.outputs.tags }}
+      push: ${{ steps.plan.outputs.push }}
+    steps:
+      - name: Clone the repository
+        if: inputs.source_path != ''
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Log in to the GitHub Container registry
+        if: inputs.source_path != '' && github.event_name == 'push'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$TOKEN" | skopeo login ghcr.io -u "$ACTOR" --password-stdin
+
+      - name: Compute tree tag and plan
+        id: plan
+        run: |
+          tree_tag=""
+          if [ -n "$SOURCE_PATH" ]; then
+            trees=$(while read -r p; do
+              [ -n "$p" ] || continue
+              p=${p%/}
+              echo "$p:$(git rev-parse "HEAD:$p")"
+            done <<<"$SOURCE_PATH" | sort)
+            hash=$(printf '%s\n' "$trees" -- "$CONTAINERFILES" -- "$BUILD_ARGS" -- "$ARCHS" | sha256sum | cut -d' ' -f1)
+            tree_tag="tree-$hash"
+          fi
+
+          promote=false
+          push=false
+          tags="latest $SHA"
+          if [ "$IS_DEFAULT" = true ]; then
+            push=true
+            [ -z "$tree_tag" ] || tags="$tags $tree_tag"
+            # schedule/workflow_dispatch/workflow_run exist to pick up fresh
+            # packages or a rebuilt base, so only a plain push may promote.
+            if [ "$EVENT" = push ] && [ -n "$tree_tag" ] \
+              && skopeo inspect --raw "docker://$IMAGE_REF:$tree_tag" >/dev/null 2>&1; then
+              promote=true
+            fi
+          elif [ "$EVENT" = pull_request ] && [ "$SAME_REPO_PR" = true ] && [ -n "$tree_tag" ]; then
+            push=true
+            tags="$tree_tag"
+          fi
+
+          echo "tree_tag=$tree_tag promote=$promote push=$push tags=$tags"
+          {
+            echo "tree_tag=$tree_tag"
+            echo "promote=$promote"
+            echo "push=$push"
+            echo "tags=$tags"
+          } >> "$GITHUB_OUTPUT"
+
+  promote:
+    name: Promote the PR-built image
+    needs: plan
+    if: needs.plan.outputs.promote == 'true'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
+      TREE_TAG: ${{ needs.plan.outputs.tree_tag }}
+      SHA: ${{ github.sha }}
+    steps:
+      - name: Log in to the GitHub Container registry
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$TOKEN" | skopeo login ghcr.io -u "$ACTOR" --password-stdin
+
+      - name: Copy tree tag to latest and commit tags
+        run: |
+          for tag in "$SHA" latest; do
+            skopeo copy --all --preserve-digests \
+              "docker://$IMAGE_REF:$TREE_TAG" "docker://$IMAGE_REF:$tag"
+          done
+
   subs:
     name: Build RHEL bootc image with repo access
+    needs: plan
+    if: needs.plan.outputs.promote != 'true'
     runs-on: ubuntu-latest
     env:
       IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
@@ -93,7 +199,7 @@ jobs:
         uses: redhat-actions/buildah-build@v3
         with:
           image: ${{ env.IMAGE_NAME }}
-          tags: latest ${{ github.sha }}
+          tags: ${{ needs.plan.outputs.tags }}
           containerfiles: ${{ inputs.containerfiles }}
           archs: ${{ inputs.archs }}
           build-args: ${{ inputs.build-args }}
@@ -101,7 +207,7 @@ jobs:
       - name: Push to GitHub Container Repository
         id: push-to-ghcr
         uses: redhat-actions/push-to-registry@v3
-        if: github.ref_name == github.event.repository.default_branch
+        if: needs.plan.outputs.push == 'true'
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
