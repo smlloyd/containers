@@ -8,8 +8,8 @@ ConditionPathExists=/etc/doppler.env
 Type=oneshot
 Environment=HOME=/root
 EnvironmentFile=/etc/doppler.env
-# Only run registration if tailscale is not already logged in/online
-ExecStart=/usr/bin/sh -c 'tailscale status >/dev/null 2>&1 || tailscale up --authkey="$$(/usr/bin/doppler secrets get TS_AUTHKEY --plain)" --hostname=%H'
+# `tailscale up` drops prefs it has no flag for (e.g. advertised services), so only run it before first login
+ExecStart=/usr/libexec/tailscale-register %H
 RemainAfterExit=yes
 
 [Install]
