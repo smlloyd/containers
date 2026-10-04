@@ -8,6 +8,9 @@ on:
       containerfiles:
         required: true
         type: string
+      # Comma- or space-separated: x86_64 (amd64) and/or arm64 (aarch64). Each
+      # arch builds on a native runner, so its subscription registers for that
+      # arch's content. Empty means x86_64.
       archs:
         required: false
         type: string
@@ -58,6 +61,8 @@ jobs:
       promote: ${{ steps.plan.outputs.promote }}
       tree_tag: ${{ steps.plan.outputs.tree_tag }}
       tags: ${{ steps.plan.outputs.tags }}
+      build_tag: ${{ steps.plan.outputs.build_tag }}
+      builds: ${{ steps.plan.outputs.builds }}
       push: ${{ steps.plan.outputs.push }}
     steps:
       - name: Clone the repository
@@ -109,12 +114,32 @@ jobs:
             push=false
           fi
 
-          echo "tree_tag=$tree_tag promote=$promote push=$push tags=$tags"
+          # Per-arch images are pushed as `<build_tag>-<arch>`, then joined
+          # into the manifest list.
+          if [ "$IS_DEFAULT" = true ]; then
+            build_tag=$SHA
+          else
+            build_tag=$tree_tag
+          fi
+
+          builds='[]'
+          for arch in $(echo "${ARCHS:-x86_64}" | tr ',' ' '); do
+            case "$arch" in
+              x86_64|amd64) entry='{"arch":"amd64","platform":"linux/amd64","runner":"ubuntu-latest"}' ;;
+              arm64|aarch64) entry='{"arch":"arm64","platform":"linux/arm64","runner":"ubuntu-24.04-arm"}' ;;
+              *) echo "::error::Unsupported arch: $arch"; exit 1 ;;
+            esac
+            builds=$(jq -c --argjson e "$entry" '. + [$e]' <<<"$builds")
+          done
+
+          echo "tree_tag=$tree_tag promote=$promote push=$push tags=$tags build_tag=$build_tag builds=$builds"
           {
             echo "tree_tag=$tree_tag"
             echo "promote=$promote"
             echo "push=$push"
             echo "tags=$tags"
+            echo "build_tag=$build_tag"
+            echo "builds=$builds"
           } >> "$GITHUB_OUTPUT"
 
   promote:
@@ -141,12 +166,15 @@ jobs:
           done
 
   subs:
-    name: Build RHEL bootc image with repo access
+    name: Build RHEL bootc image with repo access (${{ matrix.arch }})
     needs: plan
     if: needs.plan.outputs.promote != 'true'
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.builds) }}
+    runs-on: ${{ matrix.runner }}
     env:
-      IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
+      IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
     container:
       image: registry.fedoraproject.org/fedora:latest
@@ -162,15 +190,12 @@ jobs:
         uses: actions/cache@v6
         with:
           path: /var/cache/dnf
-          key: dnf-fedora-latest-bootc-tools-v1
+          key: dnf-fedora-latest-bootc-tools-${{ matrix.arch }}-v1
           restore-keys: |
-            dnf-fedora-latest-bootc-tools-
+            dnf-fedora-latest-bootc-tools-${{ matrix.arch }}-
 
       - name: Get container tools in UBI builder
-        run: dnf -y install podman buildah skopeo qemu-user-static
-
-      - name: Register multiarch
-        run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
+        run: dnf -y install podman buildah skopeo
 
       - name: Access a subscription via activation key
         env:
@@ -205,24 +230,28 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           auth_file_path: /run/containers/0/auth.json
 
-      - name: Use buildah bud to create the image
-        id: build-image
-        uses: redhat-actions/buildah-build@v3
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ needs.plan.outputs.tags }}
-          containerfiles: ${{ inputs.containerfiles }}
-          archs: ${{ inputs.archs }}
-          build-args: ${{ inputs.build-args }}
+      - name: Build the image
+        shell: bash
+        env:
+          CONTAINERFILES: ${{ inputs.containerfiles }}
+          BUILD_ARGS: ${{ inputs.build-args }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          args=()
+          while read -r f; do
+            [ -n "$f" ] && args+=(-f "$f")
+          done <<<"$CONTAINERFILES"
+          while read -r a; do
+            [ -n "$a" ] && args+=(--build-arg "$a")
+          done <<<"$BUILD_ARGS"
+          buildah build --platform "$PLATFORM" "${args[@]}" -t image .
 
-      - name: Push to GitHub Container Repository
-        id: push-to-ghcr
-        uses: redhat-actions/push-to-registry@v3
+      - name: Push the per-arch image
         if: needs.plan.outputs.push == 'true'
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ env.REGISTRY }}
+        env:
+          TAG: ${{ needs.plan.outputs.build_tag }}-${{ matrix.arch }}
+        run: buildah push image "docker://$IMAGE_REF:$TAG"
 
       - name: Clean up the subscription
         if: always()
@@ -230,14 +259,44 @@ jobs:
           SMDEV_CONTAINER_OFF: 1
         run: subscription-manager unregister
 
+  merge:
+    name: Publish the manifest list
+    needs: [plan, subs]
+    if: needs.plan.outputs.push == 'true' && needs.plan.outputs.promote != 'true'
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
+      BUILD_TAG: ${{ needs.plan.outputs.build_tag }}
+      BUILDS: ${{ needs.plan.outputs.builds }}
+      TAGS: ${{ needs.plan.outputs.tags }}
+    steps:
+      - name: Log in to the GitHub Container registry
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$TOKEN" | buildah login ghcr.io -u "$ACTOR" --password-stdin
+
+      # The per-arch images are already in the repository, so only the list
+      # itself is pushed.
+      - name: Create and push the manifest list
+        run: |
+          buildah manifest create image
+          for arch in $(jq -r '.[].arch' <<<"$BUILDS"); do
+            buildah manifest add image "docker://$IMAGE_REF:$BUILD_TAG-$arch"
+          done
+          buildah manifest inspect image
+          for tag in $TAGS; do
+            buildah manifest push --all=false image "docker://$IMAGE_REF:$tag"
+          done
+
   prune:
     name: Prune old image versions
-    needs: [plan, promote, subs]
+    needs: [plan, promote, merge]
     if: >-
       always()
       && inputs.publish
       && github.ref_name == github.event.repository.default_branch
-      && (needs.promote.result == 'success' || needs.subs.result == 'success')
+      && (needs.promote.result == 'success' || needs.merge.result == 'success')
     uses: ./.github/workflows/prune-ghcr.yml
     with:
       package: ${{ inputs.image_name }}
