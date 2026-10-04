@@ -1,3 +1,0 @@
-COPY ./bootc/rhel9/gcp/etc /etc/
-COPY ./bootc/rhel9/gcp/usr /usr/
-RUN dnf -y install google-compute-engine && dnf clean all
