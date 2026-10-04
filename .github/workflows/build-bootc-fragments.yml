@@ -49,7 +49,10 @@ jobs:
       FRAGMENT: ${{ matrix.fragment }}
       SOURCE: ${{ github.server_url }}/${{ github.repository }}
       SHA: ${{ github.sha }}
-      PUSH: ${{ github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
+      IS_DEFAULT: ${{ github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
+      # Same-repo PRs publish only a tree tag, so downstream branches can pin
+      # the digest that `latest` will have after merge.
+      PUSH: ${{ (github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch) || github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Clone the repository
         uses: actions/checkout@v7
@@ -78,7 +81,10 @@ jobs:
           ACTOR: ${{ github.actor }}
         run: |
           echo "$TOKEN" | buildah login ghcr.io -u "$ACTOR" --password-stdin
-          for tag in latest "$SHA"; do
+          tree_tag="tree-$(git rev-parse "HEAD:bootc/fragments/$FRAGMENT" | sha256sum | cut -d' ' -f1)"
+          tags=$tree_tag
+          [ "$IS_DEFAULT" = true ] && tags="latest $SHA $tree_tag"
+          for tag in $tags; do
             buildah manifest push --all --digestfile digest fragment "docker://$IMAGE_REF:$tag"
           done
           echo "Pushed $IMAGE_REF@$(cat digest)"
