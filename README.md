@@ -5,9 +5,9 @@ A collection of custom container images and bootable container (bootc) configura
 ## Image Categories
 
 ### [Bootable Containers (bootc)](./bootc/)
-These images are based on Fedora and RHEL, designed to be booted as complete operating systems using the `bootc` workflow.
+These images are based on RHEL, designed to be booted as complete operating systems using the `bootc` workflow.
 
-- **Base Images**: [Fedora](./bootc/fedora/), [RHEL 9](./bootc/rhel9/), [RHEL 10](./bootc/rhel10/)
+- **Base Images**: [RHEL 9](./bootc/rhel9/), [RHEL 10](./bootc/rhel10/)
 - **Specialisations**:
   - **k3s**: Optimized for running k3s nodes.
   - **Kubevirt**: Configured for virtualization workloads.
