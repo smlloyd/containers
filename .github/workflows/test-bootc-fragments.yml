@@ -1,0 +1,59 @@
+name: Test bootc fragments
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly on Monday at 03:00 UTC
+  pull_request:
+    paths:
+      - bootc/fragments/**
+      - bootc/test/**
+      - .github/workflows/test-bootc-fragments.yml
+      - .github/workflows/build-rhel-bootc.yml
+  push:
+    paths:
+      - bootc/fragments/**
+      - bootc/test/**
+      - .github/workflows/test-bootc-fragments.yml
+      - .github/workflows/build-rhel-bootc.yml
+    branches:
+      - main
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    # Fork PRs don't get the RHEL subscription secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: rhel9-gcp
+            release: 9
+            fragments: rhel-base serial-console doppler tailscale gcp
+            archs: x86_64
+          - name: rhel9-kubevirt
+            release: 9
+            fragments: rhel-base serial-console doppler tailscale kubevirt
+            archs: x86_64
+          - name: rhel10-docker-kubevirt
+            release: 10
+            fragments: rhel-base serial-console doppler tailscale docker kubevirt
+            archs: x86_64, arm64
+          - name: rhel10-incus
+            release: 10
+            fragments: rhel-base serial-console doppler tailscale incus
+            archs: x86_64
+    uses: ./.github/workflows/build-rhel-bootc.yml
+    with:
+      image_name: bootc-test/${{ matrix.name }}
+      publish: false
+      archs: ${{ matrix.archs }}
+      build-args: |
+        RELEASE=${{ matrix.release }}
+        FRAGMENTS=${{ matrix.fragments }}
+      containerfiles: |
+        bootc/test/Containerfile
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit

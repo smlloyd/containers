@@ -1,0 +1,102 @@
+name: Build bootc fragments
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - bootc/fragments/**
+      - .github/workflows/build-bootc-fragments.yml
+  push:
+    paths:
+      - bootc/fragments/**
+      - .github/workflows/build-bootc-fragments.yml
+    branches:
+      - main
+
+jobs:
+  list:
+    name: List fragments
+    runs-on: ubuntu-latest
+    outputs:
+      fragments: ${{ steps.list.outputs.fragments }}
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: List fragment directories
+        id: list
+        run: |
+          fragments=$(find bootc/fragments -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | jq -Rnc '[inputs]')
+          echo "fragments=$fragments" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.fragment }}
+    needs: list
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fragment: ${{ fromJSON(needs.list.outputs.fragments) }}
+    concurrency:
+      group: bootc-fragment-${{ matrix.fragment }}${{ github.event_name == 'pull_request' && format('-pr-{0}', github.event.pull_request.number) || '' }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_REF: ghcr.io/${{ github.repository_owner }}/bootc-fragments/${{ matrix.fragment }}
+      FRAGMENT: ${{ matrix.fragment }}
+      SOURCE: ${{ github.server_url }}/${{ github.repository }}
+      SHA: ${{ github.sha }}
+      PUSH: ${{ github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch }}
+    steps:
+      - name: Clone the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Fragments only COPY files, so building other arches needs no emulation.
+      # Unchanged content must rebuild to the same manifest-list digest to keep
+      # downstream Renovate quiet: --timestamp 0 fixes the images, and building
+      # one platform at a time fixes their order in the list.
+      - name: Build multi-arch manifest
+        run: |
+          for platform in linux/amd64 linux/arm64; do
+            buildah build --timestamp 0 \
+              --platform "$platform" \
+              --label "org.opencontainers.image.source=$SOURCE" \
+              --manifest fragment \
+              -f bootc/fragments/Containerfile "bootc/fragments/$FRAGMENT"
+          done
+          buildah manifest inspect fragment
+
+      - name: Push to GitHub Container Repository
+        if: env.PUSH == 'true'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          echo "$TOKEN" | buildah login ghcr.io -u "$ACTOR" --password-stdin
+          for tag in latest "$SHA"; do
+            buildah manifest push --all --digestfile digest fragment "docker://$IMAGE_REF:$tag"
+          done
+          echo "Pushed $IMAGE_REF@$(cat digest)"
+
+  prune:
+    name: Prune ${{ matrix.fragment }}
+    needs: [list, build]
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    strategy:
+      fail-fast: false
+      matrix:
+        fragment: ${{ fromJSON(needs.list.outputs.fragments) }}
+    uses: ./.github/workflows/prune-ghcr.yml
+    with:
+      package: bootc-fragments/${{ matrix.fragment }}
+      # Downstream pins digests, so lagging Renovate PRs and rebuilds of old
+      # commits must still be able to pull.
+      keep_releases: 20
+      release_min_age_days: 180
+    permissions:
+      packages: write
