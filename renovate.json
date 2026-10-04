@@ -9,6 +9,12 @@
     {
       "matchPackagePatterns": [".*"],
       "dependencyDashboardApproval": false
+    },
+    {
+      "matchManagers": [
+        "quadlet"
+      ],
+      "enabled": false
     }
   ],
   "hostRules": [
@@ -16,6 +22,21 @@
       "matchHost": "https://registry.redhat.io",
       "username": "{{ secrets.REDHAT_REGISTRY_USERNAME }}",
       "password": "{{ secrets.REDHAT_REGISTRY_PASSWORD }}"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker",
+      "managerFilePatterns": [
+        "/.*\\.container$/"
+      ],
+      "matchStrings": [
+        "(?<indentation>\\n\\s*)Image\\s*=\\s*(?<depName>[a-zA-Z0-9/._-]+)(?::(?<currentValue>[a-zA-Z0-9._-]+))?(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
+      ],
+      "matchStringsStrategy": "any",
+      "autoReplaceStringTemplate": "{{{indentation}}}Image={{{depName}}}{{#if newValue}}:{{{newValue}}}{{/if}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"
     }
   ]
 }
