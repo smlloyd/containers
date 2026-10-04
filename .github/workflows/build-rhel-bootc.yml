@@ -176,8 +176,8 @@ jobs:
     env:
       IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
-    # Container storage on the job container's own overlay root can't use
-    # native overlay, so it lives on a host directory instead.
+    # On the job container's own overlay root, container storage can't diff
+    # layers natively and commits crawl, so it lives on a host directory.
     container:
       image: registry.fedoraproject.org/fedora:latest
       options: --privileged -v /var/lib/containers:/var/lib/containers
@@ -234,7 +234,7 @@ jobs:
 
       - name: Show container storage
         run: |
-          buildah info --format '{{.store.GraphDriverName}} {{.store.GraphOptions}}'
+          buildah info --format '{{.store.GraphDriverName}} native-diff={{index .store.GraphStatus "Native Overlay Diff"}}'
           df -hT /var/lib/containers
 
       - name: Build the image
