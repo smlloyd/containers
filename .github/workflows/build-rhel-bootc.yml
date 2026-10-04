@@ -8,6 +8,9 @@ on:
       containerfiles:
         required: true
         type: string
+      # Comma- or space-separated: x86_64 (amd64) and/or arm64 (aarch64). Each
+      # arch builds on a native runner, so its subscription registers for that
+      # arch's content. Empty means x86_64.
       archs:
         required: false
         type: string
@@ -24,6 +27,11 @@ on:
         required: false
         type: string
         default: ""
+      # false builds without pushing, promoting or pruning (e.g. test builds).
+      publish:
+        required: false
+        type: boolean
+        default: true
 
 # Serializes builds per image so two merges landing close together can't race
 # to push `latest` out of order (an earlier commit's build finishing after a
@@ -44,6 +52,7 @@ jobs:
       CONTAINERFILES: ${{ inputs.containerfiles }}
       BUILD_ARGS: ${{ inputs.build-args }}
       ARCHS: ${{ inputs.archs }}
+      PUBLISH: ${{ inputs.publish }}
       SHA: ${{ github.sha }}
       EVENT: ${{ github.event_name }}
       IS_DEFAULT: ${{ github.ref_name == github.event.repository.default_branch }}
@@ -52,6 +61,8 @@ jobs:
       promote: ${{ steps.plan.outputs.promote }}
       tree_tag: ${{ steps.plan.outputs.tree_tag }}
       tags: ${{ steps.plan.outputs.tags }}
+      build_tag: ${{ steps.plan.outputs.build_tag }}
+      builds: ${{ steps.plan.outputs.builds }}
       push: ${{ steps.plan.outputs.push }}
     steps:
       - name: Clone the repository
@@ -98,12 +109,37 @@ jobs:
             tags="$tree_tag"
           fi
 
-          echo "tree_tag=$tree_tag promote=$promote push=$push tags=$tags"
+          if [ "$PUBLISH" != true ]; then
+            promote=false
+            push=false
+          fi
+
+          # Per-arch images are pushed as `<build_tag>-<arch>`, then joined
+          # into the manifest list.
+          if [ "$IS_DEFAULT" = true ]; then
+            build_tag=$SHA
+          else
+            build_tag=$tree_tag
+          fi
+
+          builds='[]'
+          for arch in $(echo "${ARCHS:-x86_64}" | tr ',' ' '); do
+            case "$arch" in
+              x86_64|amd64) entry='{"arch":"amd64","platform":"linux/amd64","runner":"ubuntu-latest"}' ;;
+              arm64|aarch64) entry='{"arch":"arm64","platform":"linux/arm64","runner":"ubuntu-24.04-arm"}' ;;
+              *) echo "::error::Unsupported arch: $arch"; exit 1 ;;
+            esac
+            builds=$(jq -c --argjson e "$entry" '. + [$e]' <<<"$builds")
+          done
+
+          echo "tree_tag=$tree_tag promote=$promote push=$push tags=$tags build_tag=$build_tag builds=$builds"
           {
             echo "tree_tag=$tree_tag"
             echo "promote=$promote"
             echo "push=$push"
             echo "tags=$tags"
+            echo "build_tag=$build_tag"
+            echo "builds=$builds"
           } >> "$GITHUB_OUTPUT"
 
   promote:
@@ -130,12 +166,15 @@ jobs:
           done
 
   subs:
-    name: Build RHEL bootc image with repo access
+    name: Build RHEL bootc image with repo access (${{ matrix.arch }})
     needs: plan
     if: needs.plan.outputs.promote != 'true'
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.builds) }}
+    runs-on: ${{ matrix.runner }}
     env:
-      IMAGE_NAME: ${{ github.repository_owner }}/${{ inputs.image_name }}
+      IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
       REGISTRY: ghcr.io
     container:
       image: registry.fedoraproject.org/fedora:latest
@@ -151,15 +190,12 @@ jobs:
         uses: actions/cache@v6
         with:
           path: /var/cache/dnf
-          key: dnf-fedora-latest-bootc-tools-v1
+          key: dnf-fedora-latest-bootc-tools-${{ matrix.arch }}-v1
           restore-keys: |
-            dnf-fedora-latest-bootc-tools-
+            dnf-fedora-latest-bootc-tools-${{ matrix.arch }}-
 
       - name: Get container tools in UBI builder
-        run: dnf -y install podman buildah skopeo qemu-user-static
-
-      - name: Register multiarch
-        run: podman run --rm --privileged --cgroups=disabled docker.io/tonistiigi/binfmt --install all
+        run: dnf -y install podman buildah skopeo
 
       - name: Access a subscription via activation key
         env:
@@ -194,24 +230,28 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           auth_file_path: /run/containers/0/auth.json
 
-      - name: Use buildah bud to create the image
-        id: build-image
-        uses: redhat-actions/buildah-build@v3
-        with:
-          image: ${{ env.IMAGE_NAME }}
-          tags: ${{ needs.plan.outputs.tags }}
-          containerfiles: ${{ inputs.containerfiles }}
-          archs: ${{ inputs.archs }}
-          build-args: ${{ inputs.build-args }}
+      - name: Build the image
+        shell: bash
+        env:
+          CONTAINERFILES: ${{ inputs.containerfiles }}
+          BUILD_ARGS: ${{ inputs.build-args }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          args=()
+          while read -r f; do
+            [ -n "$f" ] && args+=(-f "$f")
+          done <<<"$CONTAINERFILES"
+          while read -r a; do
+            [ -n "$a" ] && args+=(--build-arg "$a")
+          done <<<"$BUILD_ARGS"
+          buildah build --platform "$PLATFORM" "${args[@]}" -t image .
 
-      - name: Push to GitHub Container Repository
-        id: push-to-ghcr
-        uses: redhat-actions/push-to-registry@v3
+      - name: Push the per-arch image
         if: needs.plan.outputs.push == 'true'
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          registry: ${{ env.REGISTRY }}
+        env:
+          TAG: ${{ needs.plan.outputs.build_tag }}-${{ matrix.arch }}
+        run: buildah push image "docker://$IMAGE_REF:$TAG"
 
       - name: Clean up the subscription
         if: always()
@@ -219,86 +259,46 @@ jobs:
           SMDEV_CONTAINER_OFF: 1
         run: subscription-manager unregister
 
-  prune:
-    name: Prune old image versions
-    needs: [plan, promote, subs]
-    if: >-
-      always()
-      && github.ref_name == github.event.repository.default_branch
-      && (needs.promote.result == 'success' || needs.subs.result == 'success')
-    # Downstream variant builds trigger on this run's success via workflow_run,
-    # so a failed prune must not fail the run.
-    continue-on-error: true
+  merge:
+    name: Publish the manifest list
+    needs: [plan, subs]
+    if: needs.plan.outputs.push == 'true' && needs.plan.outputs.promote != 'true'
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ACTOR: ${{ github.actor }}
-      OWNER: ${{ github.repository_owner }}
-      PACKAGE: ${{ inputs.image_name }}
-      KEEP_RELEASES: 5
-      TREE_MAX_AGE_DAYS: 14
-      UNTAGGED_MIN_AGE_HOURS: 24
+      IMAGE_REF: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
+      BUILD_TAG: ${{ needs.plan.outputs.build_tag }}
+      BUILDS: ${{ needs.plan.outputs.builds }}
+      TAGS: ${{ needs.plan.outputs.tags }}
     steps:
       - name: Log in to the GitHub Container registry
-        run: echo "$GH_TOKEN" | skopeo login ghcr.io -u "$ACTOR" --password-stdin
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$TOKEN" | buildah login ghcr.io -u "$ACTOR" --password-stdin
 
-      # Keeps anything tagged other than `<sha>`/`tree-<hash>` (e.g. latest),
-      # the newest KEEP_RELEASES `<sha>`-tagged versions, `tree-*`-only
-      # versions younger than TREE_MAX_AGE_DAYS, and per-arch manifests that a
-      # kept manifest list references. Untagged versions get an age guard
-      # because a concurrent PR push uploads them before its manifest list.
-      - name: Delete unneeded versions
+      # The per-arch images are already in the repository, so only the list
+      # itself is pushed.
+      - name: Create and push the manifest list
         run: |
-          set -euo pipefail
-          if [ "$(gh api "/users/$OWNER" --jq .type)" = Organization ]; then
-            api="/orgs/$OWNER"
-          else
-            api="/users/$OWNER"
-          fi
-          api="$api/packages/container/${PACKAGE//\//%2F}/versions"
-
-          gh api --paginate "$api?per_page=100" --jq '.[]' \
-            | jq -s 'sort_by(.created_at) | reverse' > versions.json
-
-          jq -r \
-            --argjson now "$(date +%s)" \
-            --argjson keep "$KEEP_RELEASES" \
-            --argjson tree_age "$((TREE_MAX_AGE_DAYS * 86400))" '
-            def tags: .metadata.container.tags;
-            def age: $now - (.created_at | fromdateiso8601);
-            def other_tag: any(tags[]; test("^(tree-[0-9a-f]{64}|[0-9a-f]{40})$") | not);
-            def release: any(tags[]; test("^[0-9a-f]{40}$"));
-            [.[] | select((tags | length) > 0 and (other_tag | not))]
-            | ([.[] | select(release)] | .[$keep:])
-              + [.[] | select((release | not) and age > $tree_age)]
-            | .[] | "\(.id) \(.name) \(.metadata.container.tags | join(","))"
-          ' versions.json > delete_tagged.txt
-
-          # Kept manifest lists protect their per-arch children.
-          : > protected.txt
-          jq -r '.[] | select((.metadata.container.tags | length) > 0) | .name' versions.json \
-            | while read -r digest; do
-                grep -q " $digest " delete_tagged.txt && continue
-                skopeo inspect --raw "docker://ghcr.io/$OWNER/$PACKAGE@$digest" \
-                  | jq -r '.manifests[]?.digest' >> protected.txt
-              done
-
-          jq -r \
-            --argjson now "$(date +%s)" \
-            --argjson min_age "$((UNTAGGED_MIN_AGE_HOURS * 3600))" \
-            --rawfile protected protected.txt '
-            ($protected | split("\n")) as $p
-            | .[]
-            | select((.metadata.container.tags | length) == 0)
-            | select($now - (.created_at | fromdateiso8601) > $min_age)
-            | select(.name | IN($p[]) | not)
-            | "\(.id) \(.name) (untagged)"
-          ' versions.json > delete_untagged.txt
-
-          cat delete_tagged.txt delete_untagged.txt | while read -r id name tags; do
-            if gh api -X DELETE "$api/$id" --silent; then
-              echo "Deleted $name $tags"
-            else
-              echo "::warning::Failed to delete $name $tags"
-            fi
+          buildah manifest create image
+          for arch in $(jq -r '.[].arch' <<<"$BUILDS"); do
+            buildah manifest add image "docker://$IMAGE_REF:$BUILD_TAG-$arch"
           done
+          buildah manifest inspect image
+          for tag in $TAGS; do
+            buildah manifest push --all=false --format oci image "docker://$IMAGE_REF:$tag"
+          done
+
+  prune:
+    name: Prune old image versions
+    needs: [plan, promote, merge]
+    if: >-
+      always()
+      && inputs.publish
+      && github.ref_name == github.event.repository.default_branch
+      && (needs.promote.result == 'success' || needs.merge.result == 'success')
+    uses: ./.github/workflows/prune-ghcr.yml
+    with:
+      package: ${{ inputs.image_name }}
+    permissions:
+      packages: write

@@ -1,0 +1,15 @@
+[Unit]
+Description=Wait for Doppler API to be reachable
+After=network-online.target nss-lookup.target
+Wants=network-online.target nss-lookup.target
+ConditionPathExists=/etc/doppler.env
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/doppler.env
+Environment=HOME=/root
+ExecStart=/bin/sh -c 'until /usr/bin/doppler me >/dev/null 2>&1; do sleep 5; done'
+
+[Install]
+WantedBy=multi-user.target

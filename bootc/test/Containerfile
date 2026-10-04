@@ -1,0 +1,38 @@
+# Builds a RHEL bootc image from the fragments in this tree, for CI only.
+# RELEASE picks the base; FRAGMENTS is a space-separated, ordered list.
+ARG RELEASE=10
+
+FROM registry.redhat.io/rhel9/rhel-bootc:latest@sha256:f2ceda4e98def81f5e4c8911678a72b3e90f82e6272b63fed5596816b9e64f60 AS rhel9
+FROM registry.redhat.io/rhel10/rhel-bootc:latest@sha256:30e209647f8f72d1920b6685156a72d9fbaf926716d8a5ef810a109f2d64ca64 AS rhel10
+
+FROM rhel${RELEASE}
+ARG FRAGMENTS
+
+RUN --mount=type=bind,source=bootc/fragments,target=/f <<'EOF'
+set -eu
+for n in $FRAGMENTS; do
+  if [ -f "/f/$n/install.sh" ]; then
+    sh "/f/$n/install.sh"
+  else
+    cp -R "/f/$n/system_files/." /
+  fi
+done
+EOF
+
+RUN <<'EOF'
+set -eu
+case " $FRAGMENTS " in
+  *" serial-console "*)
+    case "$(uname -m)" in
+      x86_64) want=ttyS0 ;;
+      aarch64) want=ttyAMA0 ;;
+    esac
+    kargs=$(bootc install print-configuration --all)
+    echo "$kargs"
+    echo "$kargs" | grep -q "console=$want," || { echo "missing console=$want" >&2; exit 1; }
+    [ "$(echo "$kargs" | grep -o 'console=tty[A-Z]' | wc -l)" -eq 1 ] || { echo "more than one serial console" >&2; exit 1; }
+    ;;
+esac
+EOF
+
+RUN bootc container lint

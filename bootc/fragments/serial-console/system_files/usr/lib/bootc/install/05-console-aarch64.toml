@@ -1,0 +1,3 @@
+[install]
+match-architectures = ["aarch64"]
+kargs = ["console=tty0", "console=ttyAMA0,115200n8"]

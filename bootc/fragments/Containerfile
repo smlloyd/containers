@@ -1,0 +1,3 @@
+# Packages one fragment directory (the build context) as a files-only image.
+FROM scratch
+COPY . /

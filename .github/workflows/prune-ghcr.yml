@@ -1,0 +1,110 @@
+name: Prune GHCR package versions
+on:
+  workflow_call:
+    inputs:
+      package:
+        required: true
+        type: string
+      keep_releases:
+        required: false
+        type: number
+        default: 5
+      release_min_age_days:
+        required: false
+        type: number
+        default: 0
+      tree_max_age_days:
+        required: false
+        type: number
+        default: 14
+      untagged_min_age_hours:
+        required: false
+        type: number
+        default: 24
+
+jobs:
+  prune:
+    name: Prune old image versions
+    # Downstream variant builds trigger on the caller's success via
+    # workflow_run, so a failed prune must not fail the run.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ACTOR: ${{ github.actor }}
+      OWNER: ${{ github.repository_owner }}
+      PACKAGE: ${{ inputs.package }}
+      KEEP_RELEASES: ${{ inputs.keep_releases }}
+      RELEASE_MIN_AGE_DAYS: ${{ inputs.release_min_age_days }}
+      TREE_MAX_AGE_DAYS: ${{ inputs.tree_max_age_days }}
+      UNTAGGED_MIN_AGE_HOURS: ${{ inputs.untagged_min_age_hours }}
+    steps:
+      - name: Log in to the GitHub Container registry
+        run: echo "$GH_TOKEN" | skopeo login ghcr.io -u "$ACTOR" --password-stdin
+
+      # Keeps anything tagged other than `<sha>`/`tree-<hash>` (e.g. latest),
+      # the newest KEEP_RELEASES `<sha>`-tagged versions and any younger than
+      # RELEASE_MIN_AGE_DAYS, other build-tagged versions (`tree-*`, or the
+      # `-<arch>` per-arch images) younger than TREE_MAX_AGE_DAYS, and anything
+      # a kept manifest list references. Untagged versions get an age guard
+      # because a concurrent PR push uploads them before its manifest list.
+      - name: Delete unneeded versions
+        run: |
+          set -euo pipefail
+          if [ "$(gh api "/users/$OWNER" --jq .type)" = Organization ]; then
+            api="/orgs/$OWNER"
+          else
+            api="/users/$OWNER"
+          fi
+          api="$api/packages/container/${PACKAGE//\//%2F}/versions"
+
+          gh api --paginate "$api?per_page=100" --jq '.[]' \
+            | jq -s 'sort_by(.created_at) | reverse' > versions.json
+
+          jq -r \
+            --argjson now "$(date +%s)" \
+            --argjson keep "$KEEP_RELEASES" \
+            --argjson release_age "$((RELEASE_MIN_AGE_DAYS * 86400))" \
+            --argjson tree_age "$((TREE_MAX_AGE_DAYS * 86400))" '
+            def tags: .metadata.container.tags;
+            def age: $now - (.created_at | fromdateiso8601);
+            def other_tag: any(tags[]; test("^(tree-[0-9a-f]{64}|[0-9a-f]{40})(-(amd64|arm64))?$") | not);
+            def release: any(tags[]; test("^[0-9a-f]{40}$"));
+            [.[] | select((tags | length) > 0 and (other_tag | not))]
+            | ([.[] | select(release)] | .[$keep:] | map(select(age > $release_age)))
+              + [.[] | select((release | not) and age > $tree_age)]
+            | .[] | "\(.id) \(.name) \(.metadata.container.tags | join(","))"
+          ' versions.json > delete_tagged.txt
+
+          # Kept manifest lists protect their per-arch children, whether
+          # untagged or tagged `<sha>-<arch>`/`tree-<hash>-<arch>`.
+          : > protected.txt
+          jq -r '.[] | select((.metadata.container.tags | length) > 0) | .name' versions.json \
+            | while read -r digest; do
+                grep -q " $digest " delete_tagged.txt && continue
+                skopeo inspect --raw "docker://ghcr.io/$OWNER/$PACKAGE@$digest" \
+                  | jq -r '.manifests[]?.digest' >> protected.txt
+              done
+          awk 'FILENAME == ARGV[1] { p[$1]; next } !($2 in p)' protected.txt delete_tagged.txt > delete_tagged_unprotected.txt
+
+          jq -r \
+            --argjson now "$(date +%s)" \
+            --argjson min_age "$((UNTAGGED_MIN_AGE_HOURS * 3600))" \
+            --rawfile protected protected.txt '
+            ($protected | split("\n")) as $p
+            | .[]
+            | select((.metadata.container.tags | length) == 0)
+            | select($now - (.created_at | fromdateiso8601) > $min_age)
+            | select(.name | IN($p[]) | not)
+            | "\(.id) \(.name) (untagged)"
+          ' versions.json > delete_untagged.txt
+
+          cat delete_tagged_unprotected.txt delete_untagged.txt | while read -r id name tags; do
+            if gh api -X DELETE "$api/$id" --silent; then
+              echo "Deleted $name $tags"
+            else
+              echo "::warning::Failed to delete $name $tags"
+            fi
+          done
