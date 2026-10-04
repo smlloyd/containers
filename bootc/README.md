@@ -1,11 +1,10 @@
 # Bootable Containers (bootc)
 
-This directory contains configurations for building bootable container images based on Fedora and Red Hat Enterprise Linux (RHEL). These images are designed to be deployed as immutable operating systems.
+This directory contains configurations for building bootable container images based on Red Hat Enterprise Linux (RHEL). These images are designed to be deployed as immutable operating systems.
 
 ## Structure
 
 - **Base Distributions**:
-  - `fedora/`: Fedora-based bootc configurations.
   - `rhel9/`: RHEL 9-based bootc configurations.
   - `rhel10/`: RHEL 10-based bootc configurations.
 
