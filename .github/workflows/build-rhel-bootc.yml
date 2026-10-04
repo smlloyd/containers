@@ -286,7 +286,7 @@ jobs:
           done
           buildah manifest inspect image
           for tag in $TAGS; do
-            buildah manifest push --all=false image "docker://$IMAGE_REF:$tag"
+            buildah manifest push --all=false --format oci image "docker://$IMAGE_REF:$tag"
           done
 
   prune:
