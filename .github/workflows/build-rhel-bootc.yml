@@ -24,6 +24,11 @@ on:
         required: false
         type: string
         default: ""
+      # false builds without pushing, promoting or pruning (e.g. test builds).
+      publish:
+        required: false
+        type: boolean
+        default: true
 
 # Serializes builds per image so two merges landing close together can't race
 # to push `latest` out of order (an earlier commit's build finishing after a
@@ -44,6 +49,7 @@ jobs:
       CONTAINERFILES: ${{ inputs.containerfiles }}
       BUILD_ARGS: ${{ inputs.build-args }}
       ARCHS: ${{ inputs.archs }}
+      PUBLISH: ${{ inputs.publish }}
       SHA: ${{ github.sha }}
       EVENT: ${{ github.event_name }}
       IS_DEFAULT: ${{ github.ref_name == github.event.repository.default_branch }}
@@ -96,6 +102,11 @@ jobs:
           elif [ "$EVENT" = pull_request ] && [ "$SAME_REPO_PR" = true ] && [ -n "$tree_tag" ]; then
             push=true
             tags="$tree_tag"
+          fi
+
+          if [ "$PUBLISH" != true ]; then
+            promote=false
+            push=false
           fi
 
           echo "tree_tag=$tree_tag promote=$promote push=$push tags=$tags"
@@ -224,81 +235,11 @@ jobs:
     needs: [plan, promote, subs]
     if: >-
       always()
+      && inputs.publish
       && github.ref_name == github.event.repository.default_branch
       && (needs.promote.result == 'success' || needs.subs.result == 'success')
-    # Downstream variant builds trigger on this run's success via workflow_run,
-    # so a failed prune must not fail the run.
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      ACTOR: ${{ github.actor }}
-      OWNER: ${{ github.repository_owner }}
-      PACKAGE: ${{ inputs.image_name }}
-      KEEP_RELEASES: 5
-      TREE_MAX_AGE_DAYS: 14
-      UNTAGGED_MIN_AGE_HOURS: 24
-    steps:
-      - name: Log in to the GitHub Container registry
-        run: echo "$GH_TOKEN" | skopeo login ghcr.io -u "$ACTOR" --password-stdin
-
-      # Keeps anything tagged other than `<sha>`/`tree-<hash>` (e.g. latest),
-      # the newest KEEP_RELEASES `<sha>`-tagged versions, `tree-*`-only
-      # versions younger than TREE_MAX_AGE_DAYS, and per-arch manifests that a
-      # kept manifest list references. Untagged versions get an age guard
-      # because a concurrent PR push uploads them before its manifest list.
-      - name: Delete unneeded versions
-        run: |
-          set -euo pipefail
-          if [ "$(gh api "/users/$OWNER" --jq .type)" = Organization ]; then
-            api="/orgs/$OWNER"
-          else
-            api="/users/$OWNER"
-          fi
-          api="$api/packages/container/${PACKAGE//\//%2F}/versions"
-
-          gh api --paginate "$api?per_page=100" --jq '.[]' \
-            | jq -s 'sort_by(.created_at) | reverse' > versions.json
-
-          jq -r \
-            --argjson now "$(date +%s)" \
-            --argjson keep "$KEEP_RELEASES" \
-            --argjson tree_age "$((TREE_MAX_AGE_DAYS * 86400))" '
-            def tags: .metadata.container.tags;
-            def age: $now - (.created_at | fromdateiso8601);
-            def other_tag: any(tags[]; test("^(tree-[0-9a-f]{64}|[0-9a-f]{40})$") | not);
-            def release: any(tags[]; test("^[0-9a-f]{40}$"));
-            [.[] | select((tags | length) > 0 and (other_tag | not))]
-            | ([.[] | select(release)] | .[$keep:])
-              + [.[] | select((release | not) and age > $tree_age)]
-            | .[] | "\(.id) \(.name) \(.metadata.container.tags | join(","))"
-          ' versions.json > delete_tagged.txt
-
-          # Kept manifest lists protect their per-arch children.
-          : > protected.txt
-          jq -r '.[] | select((.metadata.container.tags | length) > 0) | .name' versions.json \
-            | while read -r digest; do
-                grep -q " $digest " delete_tagged.txt && continue
-                skopeo inspect --raw "docker://ghcr.io/$OWNER/$PACKAGE@$digest" \
-                  | jq -r '.manifests[]?.digest' >> protected.txt
-              done
-
-          jq -r \
-            --argjson now "$(date +%s)" \
-            --argjson min_age "$((UNTAGGED_MIN_AGE_HOURS * 3600))" \
-            --rawfile protected protected.txt '
-            ($protected | split("\n")) as $p
-            | .[]
-            | select((.metadata.container.tags | length) == 0)
-            | select($now - (.created_at | fromdateiso8601) > $min_age)
-            | select(.name | IN($p[]) | not)
-            | "\(.id) \(.name) (untagged)"
-          ' versions.json > delete_untagged.txt
-
-          cat delete_tagged.txt delete_untagged.txt | while read -r id name tags; do
-            if gh api -X DELETE "$api/$id" --silent; then
-              echo "Deleted $name $tags"
-            else
-              echo "::warning::Failed to delete $name $tags"
-            fi
-          done
+    uses: ./.github/workflows/prune-ghcr.yml
+    with:
+      package: ${{ inputs.image_name }}
+    permissions:
+      packages: write
