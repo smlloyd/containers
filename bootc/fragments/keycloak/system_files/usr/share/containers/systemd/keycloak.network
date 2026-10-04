@@ -1,0 +1,9 @@
+[Unit]
+Description=Keycloak network
+
+[Network]
+Driver=bridge
+Label=app=keycloak
+
+[Install]
+WantedBy=default.target

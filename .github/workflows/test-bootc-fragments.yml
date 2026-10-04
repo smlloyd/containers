@@ -31,9 +31,9 @@ jobs:
             release: 9
             fragments: rhel-base serial-console doppler tailscale gcp
             archs: x86_64
-          - name: rhel9-kubevirt
+          - name: rhel9-kubevirt-keycloak
             release: 9
-            fragments: rhel-base serial-console doppler tailscale kubevirt
+            fragments: rhel-base serial-console doppler tailscale kubevirt keycloak
             archs: x86_64
           - name: rhel10-docker-kubevirt
             release: 10

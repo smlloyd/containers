@@ -1,0 +1,43 @@
+[Unit]
+Description=Keycloak container
+After=keycloak-setup.service tailscaled.service
+Requires=keycloak-setup.service
+ConditionPathExists=/etc/doppler.env
+
+[Container]
+Image=ghcr.io/smlloyd/keycloak-crdb:latest@sha256:f54e659fbcb045308ca8a123d2215b51d9211c3539ef48202f711b6bd8fc197f
+GlobalArgs=--storage-opt=additionalimagestore=/usr/lib/bootc/storage
+ContainerName=keycloak
+UserNS=auto
+NoNewPrivileges=true
+DropCapability=ALL
+
+# Custom network (rather than podman's default) gets a real aardvark-dns
+# resolver running in the host's netns, so it can reach systemd-resolved's
+# split-DNS routing for *.ts.net (needed for LDAP) instead of a static
+# fallback resolv.conf baked in at container creation.
+Network=keycloak.network
+
+# Bind ports to Tailscale interface only — IP resolved by keycloak-setup.service
+PodmanArgs=-p ${TAILSCALE_IP}:8080:8080 -p ${TAILSCALE_IP}:8443:8443 -p ${TAILSCALE_IP}:9000:9000 -p ${TAILSCALE_IP}:7800:7800
+
+EnvironmentFile=/run/keycloak/env
+Exec=start --optimized
+
+Environment=KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true
+Environment=KC_PROXY_HEADERS=xforwarded
+Environment=KC_HTTP_ENABLED=true
+Environment=KC_DB_SCHEMA=public
+Environment=KC_DB_SCHEMA_MIGRATION_STRATEGY=update
+Secret=doppler_token_keycloak,type=env,target=DOPPLER_TOKEN
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+EnvironmentFile=/run/keycloak/env
+EnvironmentFile=/etc/doppler.env
+Environment=HOME=/root
+ExecStartPre=/usr/bin/doppler run -- sh -c 'podman secret rm doppler_token_keycloak >/dev/null 2>&1 || true; printf "%%s" "$${DOPPLER_TOKEN_KEYCLOAK}" | podman secret create doppler_token_keycloak -'
+
+[Install]
+WantedBy=default.target

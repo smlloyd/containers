@@ -1,0 +1,14 @@
+[Unit]
+Description=Keycloak pre-start setup
+After=tailscaled.service
+Requires=tailscaled.service
+Before=keycloak.service
+
+[Service]
+Type=oneshot
+ExecStartPre=sleep 10
+ExecStart=/usr/local/bin/keycloak-prestart.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target
