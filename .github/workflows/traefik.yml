@@ -7,9 +7,15 @@ on:
       - main
     paths:
       - "traefik/**"
+      - .github/workflows/traefik.yml
+      - .github/workflows/docker-publish.yml
   pull_request:
     branches:
       - main
+    paths:
+      - "traefik/**"
+      - .github/workflows/traefik.yml
+      - .github/workflows/docker-publish.yml
 
 jobs:
   build_image:

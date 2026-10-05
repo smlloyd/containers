@@ -7,9 +7,15 @@ on:
       - main
     paths:
       - "keycloak-postgres/**"
+      - .github/workflows/keycloak-postgres.yml
+      - .github/workflows/docker-publish.yml
   pull_request:
     branches:
       - main
+    paths:
+      - "keycloak-postgres/**"
+      - .github/workflows/keycloak-postgres.yml
+      - .github/workflows/docker-publish.yml
 
 jobs:
   build_image:
