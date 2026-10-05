@@ -70,9 +70,39 @@ jobs:
               --platform "$platform" \
               --label "org.opencontainers.image.source=$SOURCE" \
               --manifest fragment \
+              --tag "fragment-${platform#linux/}" \
               -f bootc/fragments/Containerfile "bootc/fragments/$FRAGMENT"
           done
           buildah manifest inspect fragment
+
+      # Every arch must carry exactly the fragment's files with their modes, so
+      # a packaging mistake fails here rather than in every consumer.
+      - name: Verify fragment contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=$(cd "bootc/fragments/$FRAGMENT" \
+            && find . -mindepth 1 \( -type f -o -type l \) -printf '%P %m\n' | sort)
+          for arch in amd64 arm64; do
+            got_arch=$(buildah inspect --type image "fragment-$arch" | jq -r .OCIv1.architecture)
+            if [ "$got_arch" != "$arch" ]; then
+              echo "::error::fragment-$arch has architecture $got_arch"
+              exit 1
+            fi
+            # shellcheck disable=SC2016 # expanded by the inner shell
+            actual=$(buildah unshare bash -euc '
+              ctr=$(buildah from --platform "linux/$2" "$1")
+              trap "buildah rm $ctr >/dev/null" EXIT
+              cd "$(buildah mount "$ctr")"
+              find . -mindepth 1 \( -type f -o -type l \) -printf "%P %m\n" | sort
+            ' _ "fragment-$arch" "$arch")
+            if [ "$actual" != "$expected" ]; then
+              echo "::error::fragment-$arch contents differ from bootc/fragments/$FRAGMENT"
+              diff <(echo "$expected") <(echo "$actual") || true
+              exit 1
+            fi
+            echo "$arch: $(echo "$actual" | wc -l) files match"
+          done
 
       - name: Push to GitHub Container Repository
         if: env.PUSH == 'true'
@@ -88,6 +118,13 @@ jobs:
             buildah manifest push --all --digestfile digest fragment "docker://$IMAGE_REF:$tag"
           done
           echo "Pushed $IMAGE_REF@$(cat digest)"
+
+          arches=$(skopeo inspect --raw "docker://$IMAGE_REF@$(cat digest)" \
+            | jq -r '[.manifests[].platform.architecture] | sort | join(" ")')
+          if [ "$arches" != "amd64 arm64" ]; then
+            echo "::error::Published manifest list has architectures: $arches"
+            exit 1
+          fi
 
   prune:
     name: Prune ${{ matrix.fragment }}
