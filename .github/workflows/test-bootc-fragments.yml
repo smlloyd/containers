@@ -27,8 +27,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: rhel9-gcp
-            release: 9
+          - name: rhel10-gcp
+            release: 10
             fragments: rhel-base serial-console doppler tailscale gcp registry-auth
             archs: x86_64
           - name: rhel9-kubevirt-keycloak
