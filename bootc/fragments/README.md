@@ -15,6 +15,7 @@ run their install step inside the consuming build.
 | `incus` | scripted | Incus agent loader and cloud-init (VMs need an `agent:config` disk) |
 | `gcp` | scripted | Google Compute Engine guest environment |
 | `docker` | scripted | Docker CE (also installs `jq`) |
+| `registry-auth` | scripted | Boot-time GHCR login for bootc from Doppler `GHCR_USERNAME`/`GHCR_TOKEN` (needs `doppler` first) |
 | `keycloak` | scripted | Keycloak (`keycloak-crdb`) quadlet on the Tailscale IP (needs `doppler` and `tailscale` first) |
 
 ## Layout

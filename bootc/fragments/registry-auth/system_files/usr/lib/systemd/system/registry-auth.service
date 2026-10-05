@@ -1,0 +1,20 @@
+[Unit]
+Description=Provision GHCR registry authentication
+After=network-online.target nss-lookup.target doppler-ready.service
+Wants=network-online.target doppler-ready.service
+ConditionPathExists=/etc/doppler.env
+Before=bootc-fetch-apply-updates.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+EnvironmentFile=/etc/doppler.env
+Environment=HOME=/root
+RuntimeDirectory=ostree
+RuntimeDirectoryPreserve=yes
+# bootc reads /run/ostree/auth.json first, so the credentials never touch disk
+ExecStart=/usr/bin/doppler run -- sh -c '\
+  echo "$${GHCR_TOKEN}" | podman login ghcr.io --username "$${GHCR_USERNAME}" --password-stdin --authfile /run/ostree/auth.json'
+
+[Install]
+WantedBy=multi-user.target
