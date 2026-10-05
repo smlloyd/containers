@@ -1,17 +1,9 @@
 # Bootable Containers (bootc)
 
-This directory contains configurations for building bootable container images based on Red Hat Enterprise Linux (RHEL). These images are designed to be deployed as immutable operating systems.
+Building blocks for RHEL bootc images. This repository publishes no RHEL
+content itself; images are built in the consuming repositories.
 
-## Structure
-
-- **Base Distributions**:
-  - `rhel9/`: RHEL 9-based bootc configurations.
-  - `rhel10/`: RHEL 10-based bootc configurations.
-
-- **Shared Resources**:
-  - `common/`: configurations shared across multiple distributions (e.g., `k3s`, `kubevirt`).
-  - `rhel-common/`: configurations shared across RHEL versions (e.g., `docker`, `k3s` specific to RHEL).
-
-## Usage
-
-Each distribution directory contains a `Containerfile` that defines the base image and layers on additional configurations from the shared directories.
+- `fragments/`: one directory per fragment, each published as
+  `ghcr.io/smlloyd/bootc-fragments/<name>`. See its README for usage.
+- `test/`: a Containerfile that CI uses to build and lint fragment
+  combinations from this tree.

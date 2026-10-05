@@ -5,14 +5,7 @@ A collection of custom container images and bootable container (bootc) configura
 ## Image Categories
 
 ### [Bootable Containers (bootc)](./bootc/)
-These images are based on RHEL, designed to be booted as complete operating systems using the `bootc` workflow.
-
-- **Base Images**: [RHEL 9](./bootc/rhel9/), [RHEL 10](./bootc/rhel10/)
-- **Specialisations**:
-  - **k3s**: Optimized for running k3s nodes.
-  - **Kubevirt**: Configured for virtualization workloads.
-  - **GCP**: Tailored for Google Cloud Platform.
-  - **Tailscale**: Integrated Tailscale connectivity.
+Composable [fragments](./bootc/fragments/) for RHEL bootc images, published as small multi-arch images. Consuming repos build `FROM registry.redhat.io/rhelN/rhel-bootc` and add the fragments they need (base tweaks, serial console, Doppler, Tailscale, KubeVirt, Incus, GCP, Docker, Keycloak), using the shared [`build-rhel-bootc.yml`](./.github/workflows/build-rhel-bootc.yml) workflow.
 
 ### Service Containers
 Customised versions of popular services, often including the Doppler CLI for secret management and internal CA certificates.
@@ -27,18 +20,15 @@ Customised versions of popular services, often including the Doppler CLI for sec
 ## Common Features
 
 - **Secret Management**: Most service containers include the [Doppler CLI](https://www.doppler.com/) to inject secrets at runtime.
-- **Composable bootc Modules**: The `bootc/common/` directory contains reusable modules that can be layered during image builds:
-  - **Doppler (`bootc/common/doppler/`)**: Installs the Doppler CLI for secret management.
-  - **Tailscale (`bootc/common/tailscale/`)**: Installs Tailscale and includes an automated registration service.
 
 ### Tailscale Registration (bootc)
-When using the composable Tailscale module, hosts can automatically register themselves using a Doppler secret.
+Hosts built with the `doppler` and `tailscale` fragments register themselves using a Doppler secret.
 
-1. **Provide Doppler Token**: On the host (via Ignition, Ansible, or manual setup), create the file `/etc/default/tailscale-register`:
+1. **Provide Doppler Token**: On the host (via cloud-init, Ansible, or manual setup), create `/etc/doppler.env`:
    ```bash
    DOPPLER_TOKEN=dp.pt.xxxxxx
    ```
-2. **Registration**: The `tailscale-register.service` will automatically run at boot, fetch the `TS_AUTHKEY` from Doppler, and execute `tailscale up`.
+2. **Registration**: `tailscale-register.service` runs at boot, fetches `TS_AUTHKEY` from Doppler, and runs `tailscale up` if the node has never logged in.
 
 - **Internal Trust**: Custom CA certificates (`Lloyd+CA.crt`) are pre-installed in the trust store.
 - **CI/CD**: Images are automatically built and published via [GitHub Actions](./.github/workflows/).

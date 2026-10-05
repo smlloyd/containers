@@ -7,9 +7,15 @@ on:
       - main
     paths:
       - "tailscale/**"
+      - .github/workflows/tailscale.yml
+      - .github/workflows/docker-publish.yml
   pull_request:
     branches:
       - main
+    paths:
+      - "tailscale/**"
+      - .github/workflows/tailscale.yml
+      - .github/workflows/docker-publish.yml
 
 jobs:
   build_image:
