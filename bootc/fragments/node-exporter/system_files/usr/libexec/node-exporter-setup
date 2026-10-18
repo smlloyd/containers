@@ -1,0 +1,19 @@
+#!/bin/sh
+# Writes the Tailscale IPv4 address for node-exporter.container to bind to.
+set -eu
+
+# first boot waits for registration
+ip=
+for _ in $(seq 60); do
+  ip=$(tailscale ip -4 2>/dev/null) && [ -n "$ip" ] && break
+  sleep 1
+done
+
+if [ -z "$ip" ]; then
+  echo "No Tailscale IPv4 address after 60s" >&2
+  exit 1
+fi
+
+mkdir -p /run/node-exporter
+echo "TAILSCALE_IP=$ip" >/run/node-exporter/env
+echo "Tailscale IP resolved to $ip"

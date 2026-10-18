@@ -17,6 +17,7 @@ run their install step inside the consuming build.
 | `docker` | scripted | Docker CE (also installs `jq`) |
 | `registry-auth` | scripted | Boot-time GHCR login for bootc from Doppler `GHCR_USERNAME`/`GHCR_TOKEN` (needs `doppler` first) |
 | `keycloak` | scripted | Keycloak (`keycloak-crdb`) quadlet on the Tailscale IP (needs `doppler` and `tailscale` first) |
+| `node-exporter` | scripted | Prometheus node_exporter quadlet on the Tailscale IP, with the systemd collector (needs `tailscale` first) |
 
 ## Layout
 

@@ -1,0 +1,32 @@
+[Unit]
+Description=Prometheus node_exporter
+After=node-exporter-setup.service
+Requires=node-exporter-setup.service
+
+[Container]
+Image=quay.io/prometheus/node-exporter:latest@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
+GlobalArgs=--storage-opt=additionalimagestore=/usr/lib/bootc/storage
+ContainerName=node-exporter
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=ALL
+# container_t can't read the host rootfs or the D-Bus socket
+SecurityLabelDisable=true
+
+# Host view per upstream's container instructions; no UserNS=auto, since
+# --pid=host and the rootfs view need the host user namespace
+Network=host
+PodmanArgs=--pid=host
+Volume=/:/host:ro,rslave
+Volume=/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+
+# Tailscale IP only, resolved by node-exporter-setup.service
+EnvironmentFile=/run/node-exporter/env
+Exec=--path.rootfs=/host --collector.systemd --web.listen-address=${TAILSCALE_IP}:9100
+
+[Service]
+Restart=always
+EnvironmentFile=/run/node-exporter/env
+
+[Install]
+WantedBy=default.target
