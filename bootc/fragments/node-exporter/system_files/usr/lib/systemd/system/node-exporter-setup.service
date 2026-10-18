@@ -1,0 +1,13 @@
+[Unit]
+Description=node_exporter pre-start setup
+After=tailscaled.service tailscale-register.service
+Requires=tailscaled.service
+Before=node-exporter.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/node-exporter-setup
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target
