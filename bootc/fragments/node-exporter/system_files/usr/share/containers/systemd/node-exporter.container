@@ -22,7 +22,7 @@ Volume=/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
 
 # Tailscale IP only, resolved by node-exporter-setup.service
 EnvironmentFile=/run/node-exporter/env
-Exec=--path.rootfs=/host --collector.systemd --web.listen-address=${TAILSCALE_IP}:9100
+Exec=--path.rootfs=/host --path.udev.data=/host/run/udev/data --collector.systemd --web.listen-address=${TAILSCALE_IP}:9100
 
 [Service]
 Restart=always
