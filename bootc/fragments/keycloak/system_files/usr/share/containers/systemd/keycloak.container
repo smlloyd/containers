@@ -5,7 +5,7 @@ Requires=keycloak-setup.service
 ConditionPathExists=/etc/doppler.env
 
 [Container]
-Image=ghcr.io/smlloyd/keycloak-crdb:latest@sha256:592a08e708f117bcd0f6e5c0998892056b293292cc173cbd5cc60ef7b0df0e1b
+Image=ghcr.io/smlloyd/keycloak-crdb:latest@sha256:381a207bc38601ef92aaef1aa8ba9eb3272f989ab1d8f13fa19649ef979978ff
 GlobalArgs=--storage-opt=additionalimagestore=/usr/lib/bootc/storage
 ContainerName=keycloak
 UserNS=auto
