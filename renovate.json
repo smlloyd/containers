@@ -33,10 +33,10 @@
         "/.*\\.container$/"
       ],
       "matchStrings": [
-        "(?<indentation>\\n\\s*)Image\\s*=\\s*(?<depName>[a-zA-Z0-9/._-]+)(?::(?<currentValue>[a-zA-Z0-9._-]+))?(?:@(?<currentDigest>sha256:[a-f0-9]+))?"
+        "#\\s*renovate:\\s*tag=(?<currentValue>[a-zA-Z0-9._-]+)\\s*\\n\\s*Image\\s*=\\s*(?<depName>[a-zA-Z0-9/._-]+)@(?<currentDigest>sha256:[a-f0-9]+)"
       ],
       "matchStringsStrategy": "any",
-      "autoReplaceStringTemplate": "{{{indentation}}}Image={{{depName}}}{{#if newValue}}:{{{newValue}}}{{/if}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"
+      "autoReplaceStringTemplate": "# renovate: tag={{{newValue}}}\nImage={{{depName}}}@{{{newDigest}}}"
     }
   ]
 }
