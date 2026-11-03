@@ -4,7 +4,8 @@ After=node-exporter-setup.service
 Requires=node-exporter-setup.service
 
 [Container]
-Image=quay.io/prometheus/node-exporter:latest@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
+# renovate: tag=latest
+Image=quay.io/prometheus/node-exporter@sha256:1b4e4438faca4dd7e001dd445d161a4a2091b0fededa84093b3a8dfeae1f1be0
 GlobalArgs=--storage-opt=additionalimagestore=/usr/lib/bootc/storage
 ContainerName=node-exporter
 ReadOnly=true

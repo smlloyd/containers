@@ -26,6 +26,9 @@ run their install step inside the consuming build.
 - `install.sh`, if present, copies `system_files/` itself and runs the commands
   the fragment needs. It reads the RHEL release from `/etc/os-release`, so it
   takes no build args.
+- Bound-image quadlets use a digest-only `Image=` line under a
+  `# renovate: tag=<tag>` comment. bootc's cleanup deletes bound images pinned
+  as `tag@digest`, and Renovate ignores a line without the comment.
 
 ## Usage
 
