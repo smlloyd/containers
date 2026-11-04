@@ -178,35 +178,22 @@ jobs:
       REGISTRY: ghcr.io
     # Container storage stacked on the job container's own overlay root is
     # slow, so it lives on a host directory.
+    # The builder image (bootc-builder/) has the container tools and
+    # subscription-manager preinstalled.
     container:
-      image: registry.fedoraproject.org/fedora:latest
+      image: ghcr.io/smlloyd/bootc-builder:latest@sha256:44e5a9525ee3e3e4700ea9844eee6655dcada1eeb30139ca3254e682608934dc
       options: --privileged -v /var/lib/containers:/var/lib/containers
 
     steps:
       - name: Clone the repository
         uses: actions/checkout@v7
 
-      # Cache scope is per calling repository, so this never crosses repo
-      # boundaries even though this workflow file is public.
-      - name: Cache dnf package downloads
-        uses: actions/cache@v6
-        with:
-          path: /var/cache/dnf
-          key: dnf-fedora-latest-bootc-tools-${{ matrix.arch }}-v1
-          restore-keys: |
-            dnf-fedora-latest-bootc-tools-${{ matrix.arch }}-
-
-      - name: Get container tools in UBI builder
-        run: dnf -y install podman buildah skopeo
-
       - name: Access a subscription via activation key
         env:
           SMDEV_CONTAINER_OFF: 1
           orgid: ${{ secrets.RHT_ORGID }}
           activation_key: ${{ secrets.RHT_ACT_KEY }}
-        run: |
-          dnf -y install subscription-manager
-          subscription-manager register --org=$orgid --activationkey=$activation_key
+        run: subscription-manager register --org=$orgid --activationkey=$activation_key
 
       # workaround for https://github.com/redhat-actions/podman-login/issues/42 since the docker config from the host doesn't come up to the container
       - name: Workaround open podman-login action issue

@@ -11,6 +11,11 @@
         "quadlet"
       ],
       "enabled": false
+    },
+    {
+      "matchPackageNames": ["registry.fedoraproject.org/fedora"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
     }
   ],
   "hostRules": [
