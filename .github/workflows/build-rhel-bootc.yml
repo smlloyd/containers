@@ -237,14 +237,18 @@ jobs:
           buildah info --format '{{.store.GraphDriverName}} backing={{index .store.GraphStatus "Backing Filesystem"}}'
           df -hT /var/lib/containers
 
+      # Buildah overlays the build context under TMPDIR, and the kernel
+      # refuses an overlay upper dir on the job container's overlay root.
       - name: Build the image
         shell: bash
         env:
           CONTAINERFILES: ${{ inputs.containerfiles }}
           BUILD_ARGS: ${{ inputs.build-args }}
           PLATFORM: ${{ matrix.platform }}
+          TMPDIR: /var/lib/containers/tmp
         run: |
           set -euo pipefail
+          mkdir -p "$TMPDIR"
           args=()
           while read -r f; do
             [ -n "$f" ] && args+=(-f "$f")
