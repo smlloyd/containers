@@ -14,6 +14,7 @@ Customised versions of popular services, often including the Doppler CLI for sec
   - [CockroachDB](./keycloak-crdb/)
   - [PostgreSQL](./keycloak-postgres/)
   - [Oracle](./keycloak-oracle/)
+- **[bootc builder](./bootc-builder/)**: Fedora with podman, buildah, skopeo and subscription-manager, used as the job container in `build-rhel-bootc.yml`.
 - **[Tailscale](./tailscale/)**: Tailscale image with Doppler integration.
 - **[Traefik](./traefik/)**: Traefik edge router with Doppler integration.
 

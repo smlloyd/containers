@@ -1,0 +1,32 @@
+name: Build bootc builder image
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * 1'  # Weekly on Monday at 01:00 UTC, for package updates
+  push:
+    branches:
+      - main
+    paths:
+      - "bootc-builder/**"
+      - .github/workflows/bootc-builder.yml
+      - .github/workflows/docker-publish.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "bootc-builder/**"
+      - .github/workflows/bootc-builder.yml
+      - .github/workflows/docker-publish.yml
+
+jobs:
+  build_image:
+    name: Build bootc builder image
+    uses: ./.github/workflows/docker-publish.yml
+    with:
+      image_name: bootc-builder
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    secrets: inherit
