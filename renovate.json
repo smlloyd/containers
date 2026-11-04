@@ -3,13 +3,9 @@
   "extends": [
     "config:recommended"
   ],
-  "mode": "auto",
+  "mode": "full",
   "dependencyDashboardApproval": false,
   "packageRules": [
-    {
-      "matchPackagePatterns": [".*"],
-      "dependencyDashboardApproval": false
-    },
     {
       "matchManagers": [
         "quadlet"
