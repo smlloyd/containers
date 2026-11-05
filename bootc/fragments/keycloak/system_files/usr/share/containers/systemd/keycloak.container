@@ -6,7 +6,7 @@ ConditionPathExists=/etc/doppler.env
 
 [Container]
 # renovate: tag=latest
-Image=ghcr.io/smlloyd/keycloak-crdb@sha256:81da394ffbffeb1c8d9e12f6b0588585127d499e1c67f18975fc5eed660521cf
+Image=ghcr.io/smlloyd/keycloak-crdb@sha256:68579765e68f0f6da1d89fbfab7f7bc9decc40d1a8e72543841217603c19c646
 GlobalArgs=--storage-opt=additionalimagestore=/usr/lib/bootc/storage
 ContainerName=keycloak
 UserNS=auto
