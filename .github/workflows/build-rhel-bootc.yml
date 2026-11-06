@@ -181,7 +181,7 @@ jobs:
     # The builder image (bootc-builder/) has the container tools and
     # subscription-manager preinstalled.
     container:
-      image: ghcr.io/smlloyd/bootc-builder:latest@sha256:676af74c5c8af8f299bbc9e727922abd5bdf14ad5740959ff2edf11238bd6392
+      image: ghcr.io/smlloyd/bootc-builder:latest@sha256:a740cb0a943858326a7021476cec5bfbe57223d99e31caa3bee65ff2f36c87ab
       options: --privileged -v /var/lib/containers:/var/lib/containers
 
     steps:
