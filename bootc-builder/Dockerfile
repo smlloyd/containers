@@ -1,4 +1,4 @@
-FROM registry.fedoraproject.org/fedora:45@sha256:e203b4174f6a2ce6c160ddc4917d85e6bfce32dfc610d953b355d63ec4c17909
+FROM registry.fedoraproject.org/fedora:45@sha256:db14be5698ea04f1f9a4f4fb31945205a696a01f1466cf4a7e5f5a77ca3c7a82
 
 RUN dnf -y install podman buildah skopeo subscription-manager && \
     dnf clean all
